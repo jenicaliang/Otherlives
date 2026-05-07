@@ -1,0 +1,692 @@
+/* ============================================================
+   TOKENS
+   ============================================================ */
+
+:root {
+  --ink:        #1a1714;
+  --paper:      #f4f0e8;
+  --ghost:      #b8ad9e;
+  --faint:      #d4ccbc;
+  --rust:       #8b4a35;
+  --worldline:  #6b5e52;
+  --transition: 600ms ease;
+}
+
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  width: 100%;
+  height: 100%;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'IM Fell English', serif;
+  font-size: 18px;
+  line-height: 1.75;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+/* Paper texture overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23noise)' opacity='0.035'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 1000;
+  opacity: 0.6;
+}
+
+/* ============================================================
+   WORLDLINE COUNTER
+   ============================================================ */
+
+#worldline {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 300;
+  color: var(--worldline);
+  letter-spacing: 0.05em;
+  z-index: 100;
+  transition: opacity 1s ease, color 800ms ease;
+  opacity: 0;
+}
+
+/* ============================================================
+   HOLD HINT
+   ============================================================ */
+
+/* hold-hint element kept in HTML for legacy, hidden via CSS */
+#hold-hint { display: none; }
+
+/* Inline narrative hold prompt — appears in text flow */
+.hold-prompt {
+  font-family: 'IM Fell English', serif;
+  font-size: 15px;
+  font-style: italic;
+  color: var(--ghost);
+  opacity: 0;
+  transition: opacity 800ms ease;
+  margin-top: 1.6em;
+  margin-bottom: 0;
+  text-align: left;
+}
+
+.hold-prompt.visible { opacity: 1; }
+
+/* ============================================================
+   APP & SCREENS
+   ============================================================ */
+
+#app {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 32px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition), transform var(--transition);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  background: var(--paper);
+}
+
+.screen.active {
+  opacity: 1;
+  pointer-events: all;
+}
+
+/* ============================================================
+   TEXT CONTAINERS
+   ============================================================ */
+
+.text-wrap {
+  position: relative;
+  max-width: 520px;
+  width: 100%;
+}
+
+.main-text {
+  position: relative;
+  z-index: 2;
+  transition: opacity 400ms ease;
+}
+
+.main-text p {
+  margin-bottom: 1.25em;
+  color: var(--ink);
+}
+
+.main-text p:last-child { margin-bottom: 0; }
+
+/* ============================================================
+   BLEED-THROUGHS
+   ============================================================ */
+
+.bleed-wrap {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.bleed {
+  position: absolute;
+  font-family: 'IM Fell English', serif;
+  font-size: 18px;
+  font-style: italic;
+  color: var(--ink);
+  opacity: 0;
+  line-height: 1.75;
+  transition: opacity 400ms ease;
+  white-space: pre-wrap;
+}
+
+/* Split interstitial — narrative hold prompt */
+.split-prompt {
+  font-family: 'IM Fell English', serif;
+  font-size: 15px;
+  font-style: italic;
+  color: var(--ghost);
+  margin-top: 2em;
+  margin-bottom: 0;
+}
+
+/* Hold state */
+.holding .main-text { opacity: 0.1; }
+.holding .bleed      { opacity: 1; }
+
+/* ============================================================
+   CHOICES
+   ============================================================ */
+
+.choices {
+  margin-top: 2.5em;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.choice-prompt {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--faint);
+  letter-spacing: 0.1em;
+  margin-bottom: 0.6em;
+}
+
+.choice {
+  background: none;
+  border: none;
+  border-top: 1px solid var(--faint);
+  padding: 14px 0;
+  text-align: left;
+  font-family: 'IM Fell English', serif;
+  font-size: 16px;
+  font-style: italic;
+  color: var(--ghost);
+  cursor: pointer;
+  transition: color 300ms ease, border-color 300ms ease;
+  -webkit-tap-highlight-color: transparent;
+  width: 100%;
+}
+
+.choice::before {
+  content: '→ ';
+  font-style: normal;
+  opacity: 0.5;
+}
+
+.choice:hover,
+.choice:active {
+  color: var(--ink);
+  border-color: var(--ghost);
+}
+
+/* ============================================================
+   CONTINUE BUTTON — desktop only
+   ============================================================ */
+
+.continue-btn {
+  display: block;
+  margin: 2.5em auto 0;
+  background: none;
+  border: 1px solid var(--faint);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 300;
+  color: var(--ghost);
+  letter-spacing: 0.1em;
+  text-align: center;
+  cursor: pointer;
+  padding: 10px 24px;
+  transition: color 300ms ease, border-color 300ms ease;
+  -webkit-tap-highlight-color: transparent;
+  animation: none;
+  opacity: 1;
+}
+
+.continue-btn:hover {
+  color: var(--ink);
+  border-color: var(--ghost);
+}
+
+/* SWIPE PROMPT — mobile only, hidden on desktop */
+.swipe-prompt {
+  display: none;
+  margin: 2.5em auto 0;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 300;
+  color: var(--faint);
+  letter-spacing: 0.1em;
+  text-align: center;
+  user-select: none;
+  pointer-events: none;
+}
+
+@media (max-width: 480px) {
+  .continue-btn  { display: none; }
+  .swipe-prompt  { display: block; }
+}
+
+/* ============================================================
+   TITLE SCREEN
+   ============================================================ */
+
+.title-main {
+  font-size: clamp(30px, 8vw, 52px);
+  font-weight: normal;
+  font-style: italic;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+  margin-bottom: 0.3em;
+  text-align: center;
+}
+
+.title-sub {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 300;
+  color: var(--ghost);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 3em;
+  text-align: center;
+}
+
+.title-epigraph {
+  font-size: 14px;
+  font-style: italic;
+  color: var(--ghost);
+  max-width: 380px;
+  margin: 0 auto 3em;
+  line-height: 1.8;
+  border-left: 1px solid var(--faint);
+  padding-left: 1.2em;
+  text-align: left;
+}
+
+.title-epigraph cite {
+  display: block;
+  margin-top: 0.8em;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-style: normal;
+  letter-spacing: 0.08em;
+  color: var(--faint);
+}
+
+.begin-btn {
+  display: block;
+  margin: 0 auto;
+  background: none;
+  border: 1px solid var(--faint);
+  padding: 12px 32px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 300;
+  letter-spacing: 0.15em;
+  color: var(--ghost);
+  cursor: pointer;
+  transition: border-color 300ms ease, color 300ms ease;
+}
+
+.begin-btn:hover {
+  border-color: var(--ghost);
+  color: var(--ink);
+}
+
+/* ============================================================
+   SEAM SCREEN
+   ============================================================ */
+
+.seam-text {
+  font-style: italic;
+  color: var(--ghost);
+  text-align: center;
+  font-size: 16px;
+  margin-bottom: 1.4em !important;
+}
+
+/* ============================================================
+   CARD SCREEN
+   ============================================================ */
+
+.card-scroll {
+  max-width: 520px;
+  width: 100%;
+  overflow-y: auto;
+  max-height: 100vh;
+  padding: 32px 8px 48px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.card-wrap {
+  border: 1px solid var(--faint);
+  padding: 36px 32px;
+}
+
+.card-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 300;
+  letter-spacing: 0.2em;
+  color: var(--faint);
+  text-transform: uppercase;
+  margin-bottom: 2em;
+}
+
+.card-field {
+  margin-bottom: 1.4em;
+}
+
+.card-field-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 300;
+  color: var(--ghost);
+  letter-spacing: 0.1em;
+  margin-bottom: 0.3em;
+}
+
+.card-field-value {
+  font-size: 15px;
+  font-style: italic;
+  color: var(--ink);
+  line-height: 1.6;
+}
+
+.card-bleed-quote {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  font-weight: 300;
+  font-style: italic;
+  color: var(--ghost);
+  border-left: 1px solid var(--faint);
+  padding-left: 1em;
+  margin: 1.5em 0;
+  line-height: 1.8;
+}
+
+.card-divider {
+  border: none;
+  border-top: 1px solid var(--faint);
+  margin: 2em 0;
+}
+
+.card-ending-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--faint);
+  letter-spacing: 0.1em;
+  display: block;
+  margin-bottom: 0.6em;
+}
+
+.card-ending-value {
+  font-size: 15px;
+  font-style: italic;
+  color: var(--ink);
+  line-height: 1.6;
+}
+
+/* ============================================================
+   NAME FIELD
+   ============================================================ */
+
+.name-field-wrap { margin-top: 2em; }
+
+.name-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 300;
+  color: var(--ghost);
+  letter-spacing: 0.1em;
+  display: block;
+  margin-bottom: 0.8em;
+}
+
+.name-input {
+  width: 100%;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--faint);
+  padding: 8px 0;
+  font-family: 'IM Fell English', serif;
+  font-size: 22px;
+  font-style: italic;
+  color: var(--ink);
+  outline: none;
+  transition: border-color 300ms ease;
+}
+
+.name-input::placeholder { color: var(--faint); }
+.name-input:focus { border-color: var(--ghost); }
+
+.name-confirm {
+  margin-top: 1.5em;
+  background: none;
+  border: none;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 300;
+  letter-spacing: 0.15em;
+  color: var(--faint);
+  cursor: pointer;
+  padding: 0;
+  transition: color 300ms ease;
+}
+
+.name-confirm:hover { color: var(--ink); }
+
+/* ============================================================
+   FINAL SCREEN
+   ============================================================ */
+
+.final-wrap {
+  text-align: center;
+  max-width: 400px;
+  padding: 0 8px;
+}
+
+.final-infinity {
+  display: block;
+  font-size: 48px;
+  color: var(--faint);
+  margin-bottom: 1.2em;
+}
+
+.final-name {
+  font-size: clamp(28px, 7vw, 44px);
+  font-style: italic;
+  font-weight: normal;
+  margin-bottom: 0.5em;
+}
+
+.final-body {
+  font-size: 15px;
+  font-style: italic;
+  color: var(--ghost);
+  line-height: 1.9;
+  margin-bottom: 1.5em;
+}
+
+.final-thesis {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--faint);
+  letter-spacing: 0.04em;
+  line-height: 1.8;
+  font-style: italic;
+  margin-bottom: 2.5em;
+}
+
+.restart-btn {
+  background: none;
+  border: none;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 300;
+  letter-spacing: 0.15em;
+  color: var(--faint);
+  cursor: pointer;
+  transition: color 300ms ease;
+}
+
+.restart-btn:hover { color: var(--ghost); }
+
+/* ============================================================
+   TREE LINK & FINAL COUNT
+   ============================================================ */
+
+.tree-link {
+  background: none;
+  border: none;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 300;
+  letter-spacing: 0.12em;
+  color: var(--ghost);
+  cursor: pointer;
+  padding: 0;
+  transition: color 300ms ease;
+}
+
+.tree-link:hover { color: var(--ink); }
+
+.final-count {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 300;
+  color: var(--faint);
+  letter-spacing: 0.12em;
+  margin-bottom: 1.2em;
+}
+
+/* ============================================================
+   WORLD TREE SCREEN
+   ============================================================ */
+
+.tree-screen {
+  width: 100%;
+  max-width: 660px;
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.tree-header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.tree-title {
+  font-family: 'IM Fell English', serif;
+  font-style: italic;
+  font-size: 18px;
+  color: var(--ink);
+}
+
+.tree-count {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 300;
+  color: var(--faint);
+  letter-spacing: 0.1em;
+}
+
+.tree-svg-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tree-svg-wrap svg {
+  width: 100%;
+  height: auto;
+  min-width: 320px;
+}
+
+.tree-node { transition: opacity 200ms ease; }
+.tree-node--done:hover circle { stroke: var(--ink); }
+
+.tree-tooltip {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 300;
+  font-style: italic;
+  color: var(--ghost);
+  text-align: center;
+  max-width: 400px;
+  min-height: 2em;
+  padding: 0 8px;
+  opacity: 0;
+  transition: opacity 300ms ease;
+  line-height: 1.6;
+}
+
+.tree-tooltip.visible { opacity: 1; }
+
+.tree-legend {
+  display: flex;
+  gap: 20px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 300;
+  color: var(--faint);
+  letter-spacing: 0.08em;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px solid var(--ghost);
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.legend-dot--done { background: var(--ink); }
+.legend-dot--open { background: var(--paper); }
+
+.tree-back {
+  background: none;
+  border: none;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 300;
+  letter-spacing: 0.1em;
+  color: var(--faint);
+  cursor: pointer;
+  padding: 4px 0;
+  transition: color 300ms ease;
+  align-self: flex-start;
+}
+
+.tree-back:hover { color: var(--ghost); }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+
+@media (max-width: 480px) {
+  .screen       { padding: 72px 24px 40px; }
+  body          { font-size: 17px; }
+  .card-wrap    { padding: 24px 20px; }
+  .text-wrap    { max-width: 100%; }
+}
+
+@media (min-width: 768px) {
+  body   { font-size: 19px; }
+  .screen { padding: 64px 48px; }
+}
