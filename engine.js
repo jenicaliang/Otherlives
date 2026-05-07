@@ -238,35 +238,73 @@ function setupHoldMechanic(container) {
 function setupSwipe(el, onSwipeUp) {
   let startY    = null;
   let startX    = null;
-  let atBottom  = false;  // was the user at the bottom when the touch started?
+  let atBottom  = false;
+  let atTop     = false;
   const THRESHOLD = 50;
   const ANGLE     = 35;
 
-  // Find the scrollable container within this screen, if any
   const scroller = el.querySelector('.story-scroll') || el;
 
   const checkAtBottom = () => {
-    if (scroller === el) return true; // no scroll container — always eligible
+    if (scroller === el) return true;
     return scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 8;
+  };
+
+  const checkAtTop = () => {
+    if (scroller === el) return true;
+    return scroller.scrollTop <= 0;
   };
 
   el.addEventListener('touchstart', (e) => {
     startY   = e.touches[0].clientY;
     startX   = e.touches[0].clientX;
     atBottom = checkAtBottom();
+    atTop    = checkAtTop();
   }, { passive: true });
 
   el.addEventListener('touchend', (e) => {
     if (startY === null) return;
-    const dy    = startY - e.changedTouches[0].clientY;
+    const dy    = startY - e.changedTouches[0].clientY; // positive = up
     const dx    = Math.abs(e.changedTouches[0].clientX - startX);
-    const angle = Math.atan2(dx, dy) * (180 / Math.PI);
+    const angle = Math.atan2(dx, Math.abs(dy)) * (180 / Math.PI);
 
-    if (atBottom && dy > THRESHOLD && angle < ANGLE && !state.isHolding) {
-      onSwipeUp();
+    if (!state.isHolding && angle < ANGLE) {
+      if (dy > THRESHOLD && atBottom) {
+        // Swipe up at bottom — advance
+        onSwipeUp();
+      } else if (dy < -THRESHOLD && atTop) {
+        // Swipe down at top — go back
+        goBack();
+      }
     }
-    startY = null; startX = null; atBottom = false;
+    startY = null; startX = null; atBottom = false; atTop = false;
   }, { passive: true });
+}
+
+// ============================================================
+// GO BACK
+// ============================================================
+
+// History stack — push each node as we navigate to it
+const _history = [];
+
+function pushHistory(nodeId) {
+  // Don't push duplicates, card, final, or route nodes
+  const skip = ['card', 'final', 'n10_route', 'title'];
+  if (!skip.includes(nodeId) && _history[_history.length - 1] !== nodeId) {
+    _history.push(nodeId);
+  }
+}
+
+function goBack() {
+  // Pop current node, then navigate to previous
+  _history.pop(); // remove current
+  const prev = _history.pop(); // remove and get previous
+  if (!prev) return; // nothing to go back to
+  // Reset worldline to match the previous node's position
+  // by replaying choice state — simplest: just navigate there directly
+  _transitioning = false;
+  transitionTo(prev);
 }
 
 function showHoldHint() {
@@ -390,6 +428,7 @@ function buildBleedHtml(bleeds) {
 
 function renderNode(nodeId) {
   state.currentNode = nodeId;
+  pushHistory(nodeId);
   const node = STORY[nodeId];
   if (!node) { console.warn('Unknown node:', nodeId); return; }
 
@@ -1026,6 +1065,7 @@ function showRenameOverlay(onConfirm) {
 
 function resetAndRestart() {
   _transitioning      = false;
+  _history.length     = 0;
   state.worldline     = '1';
   state.fork1         = null;
   state.fork2         = null;

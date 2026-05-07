@@ -301,17 +301,17 @@ body::before {
   font-size: 13px;
   color: var(--faint);
   letter-spacing: 0.08em;
-  margin-bottom: 0.6em;
+  margin-bottom: 0.8em;
 }
 
 .choice {
   background: none;
   border: none;
   border-top: 1px solid var(--faint);
-  padding: 14px 0;
+  padding: 16px 0;
   text-align: left;
   font-family: 'IM Fell English', serif;
-  font-size: 16px;
+  font-size: 18px;
   font-style: italic;
   color: var(--ghost);
   cursor: pointer;
