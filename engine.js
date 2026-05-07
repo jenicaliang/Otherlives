@@ -9,38 +9,52 @@
 // ============================================================
 
 const state = {
-  currentNode:   'title',
-  worldline:     '1',
-  fork1:         null,   // 'seaside' | 'city'
-  fork2:         null,   // 'yes' | 'no'
-  fork3:         null,   // 'open' | 'closed'
-  playerName:    '',
-  isHolding:     false,
-  holdHintShown: false
+    currentNode: 'title',
+    worldline: '1',
+    fork1: null,   // 'seaside' | 'city'
+    fork2: null,   // 'yes' | 'no'
+    fork3: null,   // 'open' | 'closed'
+    playerName: '',
+    isHolding: false,
+    holdHintShown: false
 };
 
 // ============================================================
 // PERSISTENCE — localStorage
 // ============================================================
 
-const STORAGE_KEY = 'the-same-shore-completed';
+const STORAGE_KEY = 'otherlives-completed';
+const NAME_KEY = 'otherlives-name';
 
 function getCompleted() {
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-  } catch { return []; }
+    try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    } catch { return []; }
 }
 
 function saveCompleted(worldline) {
-  const completed = getCompleted();
-  if (!completed.includes(worldline)) {
-    completed.push(worldline);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(completed));
-  }
+    const completed = getCompleted();
+    if (!completed.includes(worldline)) {
+        completed.push(worldline);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(completed));
+    }
 }
 
 function hasAnyCompleted() {
-  return getCompleted().length > 0;
+    return getCompleted().length > 0;
+}
+
+function getSavedName() {
+    return localStorage.getItem(NAME_KEY) || '';
+}
+
+function saveName(name) {
+    localStorage.setItem(NAME_KEY, name);
+}
+
+function clearAll() {
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(NAME_KEY);
 }
 
 // ============================================================
@@ -48,29 +62,121 @@ function hasAnyCompleted() {
 // ============================================================
 
 function updateWorldline(suffix) {
-  state.worldline += suffix;
-  const el = document.getElementById('worldline');
-  el.textContent = state.worldline;
-  el.style.opacity = '1';
-  el.style.color = 'var(--rust)';
-  setTimeout(() => { el.style.color = 'var(--worldline)'; }, 800);
+    state.worldline += suffix;
+    const el = document.getElementById('worldline');
+    el.textContent = state.worldline;
+    el.style.opacity = '1';
+    el.style.color = 'var(--rust)';
+    setTimeout(() => { el.style.color = 'var(--worldline)'; }, 800);
+    // Trigger the split flash interstitial
+    flashWorldline(state.worldline);
 }
 
 function setWorldlineInfinity() {
-  const el = document.getElementById('worldline');
-  el.style.opacity = '0';
-  setTimeout(() => {
-    el.textContent = '∞';
-    el.style.opacity = '0.35';
-    el.style.color = 'var(--worldline)';
-  }, 600);
+    const el = document.getElementById('worldline');
+    el.style.opacity = '0';
+    setTimeout(() => {
+        el.textContent = '∞';
+        el.style.opacity = '0.35';
+        el.style.color = 'var(--worldline)';
+    }, 600);
 }
 
 function restoreWorldline() {
-  const el = document.getElementById('worldline');
-  el.textContent = state.worldline;
-  el.style.opacity = '1';
-  el.style.color = 'var(--worldline)';
+    const el = document.getElementById('worldline');
+    el.textContent = state.worldline;
+    el.style.opacity = '1';
+    el.style.color = 'var(--worldline)';
+}
+
+// ============================================================
+// WORLDLINE SPLIT FLASH
+// Full-screen interstitial after each fork choice.
+// Shows the new worldline number glitching before settling.
+// ============================================================
+
+function flashWorldline(finalValue) {
+    const flash = document.getElementById('wl-flash');
+    const number = document.getElementById('wl-flash-number');
+    if (!flash || !number) return;
+
+    // Characters to glitch through
+    const chars = '0123456789.';
+    const len = finalValue.length;
+    let frame = 0;
+    const totalFrames = 25;
+    let interval;
+
+    number.textContent = finalValue;
+    flash.style.opacity = '1';
+    flash.style.pointerEvents = 'none';
+
+    interval = setInterval(() => {
+        frame++;
+        if (frame >= totalFrames) {
+            clearInterval(interval);
+            number.textContent = finalValue;
+            // Fade out
+            setTimeout(() => {
+                flash.style.opacity = '0';
+            }, 180);
+            return;
+        }
+
+        // Progress 0→1: early frames are fully random, late frames converge
+        const progress = frame / totalFrames;
+        let glitched = '';
+        for (let i = 0; i < len; i++) {
+            // Each character settles from left to right as progress increases
+            const settleThreshold = (i + 1) / len;
+            if (progress > settleThreshold) {
+                glitched += finalValue[i];
+            } else {
+                glitched += chars[Math.floor(Math.random() * chars.length)];
+            }
+        }
+        number.textContent = glitched;
+    }, 55);
+}
+
+// ============================================================
+// WORLDLINE GHOST — fragments during bleed hold
+// Creates 2 ghost copies of the worldline counter, offset
+// and faded, that appear while the player is holding.
+// ============================================================
+
+let _ghosts = [];
+
+function setupWorldlineGhosts() {
+    const wl = document.getElementById('worldline');
+    if (!wl || wl.style.opacity === '0') return;
+
+    const original = wl.textContent;
+    const chars = '0123456789.';
+    let running = true;
+
+    const glitch = () => {
+        if (!running) { wl.textContent = original; return; }
+        let g = '';
+        for (let i = 0; i < original.length; i++) {
+            g += Math.random() > 0.5
+                ? original[i]
+                : chars[Math.floor(Math.random() * chars.length)];
+        }
+        wl.textContent = g;
+        setTimeout(glitch, 80);
+    };
+
+    glitch();
+    wl._glitchStop = () => { running = false; };
+}
+
+function clearWorldlineGhosts() {
+    const wl = document.getElementById('worldline');
+    if (wl && wl._glitchStop) {
+        wl._glitchStop();
+        delete wl._glitchStop;
+    }
 }
 
 // ============================================================
@@ -81,39 +187,44 @@ function restoreWorldline() {
 // ============================================================
 
 function setupHoldMechanic(container) {
-  const bleeds = container.querySelectorAll('.bleed');
-  if (!bleeds.length) return;
+    const bleeds = container.querySelectorAll('.bleed');
+    if (!bleeds.length) return;
 
-  let holdTimeout = null;
-  let didHold     = false;
+    let holdTimeout = null;
+    let didHold = false;
 
-  const startHold = () => {
-    didHold = false;
-    holdTimeout = setTimeout(() => {
-      container.classList.add('holding');
-      state.isHolding = true;
-      didHold = true;
-    }, 120);
-  };
+    const startHold = () => {
+        didHold = false;
+        holdTimeout = setTimeout(() => {
+            container.classList.add('holding');
+            state.isHolding = true;
+            didHold = true;
+        }, 120);
+    };
 
-  const endHold = (e) => {
-    clearTimeout(holdTimeout);
-    if (didHold && e && e.cancelable) e.preventDefault();
-    container.classList.remove('holding');
-    // Keep isHolding true briefly so button click handlers can
-    // detect and ignore the synthetic click that follows touchend
-    setTimeout(() => {
-      state.isHolding = false;
-      didHold = false;
-    }, 60);
-  };
+    const endHold = (e) => {
+        clearTimeout(holdTimeout);
+        if (didHold && e && e.cancelable) e.preventDefault();
+        container.classList.remove('holding');
+        // Keep isHolding true briefly so button click handlers can
+        // detect and ignore the synthetic click that follows touchend
+        setTimeout(() => {
+            state.isHolding = false;
+            didHold = false;
+        }, 60);
+    };
 
-  container.addEventListener('mousedown',   startHold);
-  container.addEventListener('mouseup',     endHold);
-  container.addEventListener('mouseleave',  endHold);
-  container.addEventListener('touchstart',  startHold, { passive: true });
-  container.addEventListener('touchend',    endHold,   { passive: false });
-  container.addEventListener('touchcancel', endHold,   { passive: true });
+    const startHoldWithGhost = () => { startHold(); };
+    const endHoldWithGhost = (e) => { endHold(e); clearWorldlineGhosts(); };
+
+    // Also show ghosts when holding activates
+    const origStart = startHold;
+    container.addEventListener('mousedown', () => { startHold(); setTimeout(() => { if (state.isHolding) setupWorldlineGhosts(); }, 130); });
+    container.addEventListener('mouseup', (e) => { endHold(e); clearWorldlineGhosts(); });
+    container.addEventListener('mouseleave', (e) => { endHold(e); clearWorldlineGhosts(); });
+    container.addEventListener('touchstart', () => { startHold(); setTimeout(() => { if (state.isHolding) setupWorldlineGhosts(); }, 130); }, { passive: true });
+    container.addEventListener('touchend', (e) => { endHold(e); clearWorldlineGhosts(); }, { passive: false });
+    container.addEventListener('touchcancel', (e) => { endHold(e); clearWorldlineGhosts(); }, { passive: true });
 }
 
 // ============================================================
@@ -123,82 +234,127 @@ function setupHoldMechanic(container) {
 // ============================================================
 
 function setupSwipe(el, onSwipeUp) {
-  let startY = null, startX = null;
-  const THRESHOLD = 50;  // px minimum upward travel
-  const ANGLE     = 35;  // max degrees off vertical
+    let startY = null, startX = null;
+    const THRESHOLD = 50;  // px minimum upward travel
+    const ANGLE = 35;  // max degrees off vertical
 
-  el.addEventListener('touchstart', (e) => {
-    startY = e.touches[0].clientY;
-    startX = e.touches[0].clientX;
-  }, { passive: true });
+    el.addEventListener('touchstart', (e) => {
+        startY = e.touches[0].clientY;
+        startX = e.touches[0].clientX;
+    }, { passive: true });
 
-  el.addEventListener('touchend', (e) => {
-    if (startY === null) return;
-    const dy = startY - e.changedTouches[0].clientY; // positive = up
-    const dx = Math.abs(e.changedTouches[0].clientX - startX);
-    const angle = Math.atan2(dx, dy) * (180 / Math.PI);
-    if (dy > THRESHOLD && angle < ANGLE && !state.isHolding) {
-      onSwipeUp();
-    }
-    startY = null; startX = null;
-  }, { passive: true });
+    el.addEventListener('touchend', (e) => {
+        if (startY === null) return;
+        const dy = startY - e.changedTouches[0].clientY; // positive = up
+        const dx = Math.abs(e.changedTouches[0].clientX - startX);
+        const angle = Math.atan2(dx, dy) * (180 / Math.PI);
+        if (dy > THRESHOLD && angle < ANGLE && !state.isHolding) {
+            onSwipeUp();
+        }
+        startY = null; startX = null;
+    }, { passive: true });
 }
 
 function showHoldHint() {
-  if (state.holdHintShown) return;
-  state.holdHintShown = true;
-  // Show the inline narrative prompt inside the text-wrap
-  const wrap = document.querySelector('.text-wrap');
-  if (!wrap) return;
-  const prompt = document.createElement('p');
-  prompt.className = 'hold-prompt';
-  prompt.textContent = 'Press and hold to see through.';
-  // Insert before the continue button
-  const btn = wrap.querySelector('#continueBtn');
-  if (btn) wrap.insertBefore(prompt, btn);
-  else wrap.appendChild(prompt);
-  // Fade in, then fade out and remove
-  setTimeout(() => prompt.classList.add('visible'), 600);
-  setTimeout(() => {
-    prompt.classList.remove('visible');
-    setTimeout(() => prompt.remove(), 800);
-  }, 5000);
+    if (state.holdHintShown) return;
+    state.holdHintShown = true;
+    // Show the inline narrative prompt inside the text-wrap
+    const wrap = document.querySelector('.text-wrap');
+    if (!wrap) return;
+    const prompt = document.createElement('p');
+    prompt.className = 'hold-prompt';
+    prompt.textContent = 'Press and hold to see through.';
+    // Insert before the continue button
+    const btn = wrap.querySelector('#continueBtn');
+    if (btn) wrap.insertBefore(prompt, btn);
+    else wrap.appendChild(prompt);
+    // Fade in, then fade out and remove
+    setTimeout(() => prompt.classList.add('visible'), 600);
+    setTimeout(() => {
+        prompt.classList.remove('visible');
+        setTimeout(() => prompt.remove(), 800);
+    }, 5000);
 }
 
 // ============================================================
 // TRANSITIONS
 // ============================================================
 
+let _transitioning = false;
+
 function transitionTo(nodeId) {
-  const app      = document.getElementById('app');
-  const existing = app.querySelector('.screen.active');
+    if (_transitioning) return;
+    _transitioning = true;
 
-  if (existing) {
-    existing.style.opacity       = '0';
-    existing.style.transform     = 'translateY(-8px)';
-    existing.style.transition    = 'opacity 400ms ease, transform 400ms ease';
-    existing.style.pointerEvents = 'none';
-    setTimeout(() => existing.remove(), 460);
-  }
+    const app = document.getElementById('app');
+    const existing = app.querySelector('.screen.active');
 
-  setTimeout(() => renderNode(nodeId), 220);
+    if (existing) {
+        existing.style.opacity = '0';
+        existing.style.transform = 'translateY(-8px)';
+        existing.style.transition = 'opacity 400ms ease, transform 400ms ease';
+        existing.style.pointerEvents = 'none';
+        setTimeout(() => existing.remove(), 460);
+    }
+
+    setTimeout(() => renderNode(nodeId), 220);
+}
+
+function clearTransitionLock() {
+    // Called by showScreen once new screen is fully active
+    setTimeout(() => { _transitioning = false; }, 100);
 }
 
 function showScreen(html, onReady) {
-  const app = document.getElementById('app');
-  const div = document.createElement('div');
-  div.className = 'screen';
-  div.innerHTML = html;
-  app.appendChild(div);
+    const app = document.getElementById('app');
+    const div = document.createElement('div');
+    div.className = 'screen';
+    div.innerHTML = html;
+    app.appendChild(div);
 
-  requestAnimationFrame(() => {
     requestAnimationFrame(() => {
-      div.classList.add('active');
-      if (onReady) onReady(div);
+        requestAnimationFrame(() => {
+            div.classList.add('active');
+            if (onReady) onReady(div);
+            clearTransitionLock();
+        });
     });
-  });
 
-  return div;
+    return div;
+}
+
+// ============================================================
+// STORY SCROLL CENTERING
+// After render, check if content fits without scrolling.
+// If it does, center it vertically. If not, top-align with
+// padding so the user can scroll to see all content.
+// ============================================================
+
+function applyScrollBehavior(scrollEl) {
+    requestAnimationFrame(() => {
+        const fits = scrollEl.scrollHeight <= scrollEl.clientHeight;
+        if (fits) {
+            scrollEl.classList.add('story-scroll--short');
+            // No fades needed when content fits
+            const ft = scrollEl.parentElement.querySelector('.story-fade-top');
+            const fb = scrollEl.parentElement.querySelector('.story-fade-bottom');
+            if (ft) ft.style.opacity = '0';
+            if (fb) fb.style.opacity = '0';
+        } else {
+            scrollEl.classList.remove('story-scroll--short');
+            const fadeTop = scrollEl.parentElement.querySelector('.story-fade-top');
+            const fadeBot = scrollEl.parentElement.querySelector('.story-fade-bottom');
+
+            const checkEdges = () => {
+                const atTop = scrollEl.scrollTop <= 0;
+                const atBottom = scrollEl.scrollTop + scrollEl.clientHeight >= scrollEl.scrollHeight - 8;
+                if (fadeTop) fadeTop.style.opacity = atTop ? '0' : '1';
+                if (fadeBot) fadeBot.style.opacity = atBottom ? '0' : '1';
+            };
+            scrollEl.addEventListener('scroll', checkEdges, { passive: true });
+            checkEdges(); // starts at top on load
+        }
+    });
 }
 
 // ============================================================
@@ -206,12 +362,12 @@ function showScreen(html, onReady) {
 // ============================================================
 
 function buildBleedHtml(bleeds) {
-  if (!bleeds || !bleeds.length) return '';
-  return bleeds.map((b, i) => {
-    const ox = (i % 2 === 0 ? -1 : 1) * (i + 1) * 2;
-    const oy = (i % 3 === 0 ? 1 : -1) * (i + 1);
-    return `<div class="bleed" style="top:${b.top};left:${b.left};transform:translate(${ox}px,${oy}px)">${b.text}</div>`;
-  }).join('');
+    if (!bleeds || !bleeds.length) return '';
+    return bleeds.map((b, i) => {
+        const ox = (i % 2 === 0 ? -1 : 1) * (i + 1) * 2;
+        const oy = (i % 3 === 0 ? 1 : -1) * (i + 1);
+        return `<div class="bleed" style="top:${b.top};left:${b.left};transform:translate(${ox}px,${oy}px)">${b.text}</div>`;
+    }).join('');
 }
 
 // ============================================================
@@ -219,20 +375,21 @@ function buildBleedHtml(bleeds) {
 // ============================================================
 
 function renderNode(nodeId) {
-  state.currentNode = nodeId;
-  const node = STORY[nodeId];
-  if (!node) { console.warn('Unknown node:', nodeId); return; }
+    state.currentNode = nodeId;
+    const node = STORY[nodeId];
+    if (!node) { console.warn('Unknown node:', nodeId); return; }
 
-  switch (node.type) {
-    case 'title':         renderTitle();             break;
-    case 'prose':         renderProse(node);         break;
-    case 'prose-variant': renderProseVariant(node);  break;
-    case 'fork':          renderFork(node, nodeId);  break;
-    case 'split':         renderSplit(node);         break;
-    case 'seam':          renderSeam(node);          break;
-    case 'card':          renderCard();              break;
-    case 'final':         renderFinal();             break;
-  }
+    switch (node.type) {
+        case 'title': renderTitle(); break;
+        case 'prose': renderProse(node); break;
+        case 'prose-variant': renderProseVariant(node); break;
+        case 'fork': renderFork(node, nodeId); break;
+        case 'split': renderSplit(node); break;
+        case 'route': renderRoute(node); break;
+        case 'seam': renderSeam(node); break;
+        case 'card': renderCard(); break;
+        case 'final': renderFinal(); break;
+    }
 }
 
 // ============================================================
@@ -242,16 +399,20 @@ function renderNode(nodeId) {
 // ---- TITLE ----
 
 function renderTitle() {
-  const completed = hasAnyCompleted();
+    const completed = hasAnyCompleted();
+    const savedName = getSavedName();
 
-  const html = `
+    const html = `
     <div style="text-align:center;max-width:480px;width:100%;padding:0 8px">
-      <h1 class="title-main">The Same Shore</h1>
-      <p class="title-sub">A story in parallel</p>
+      <h1 class="title-main">Otherlives</h1>
+      ${savedName ? `<p class="title-name" id="titleName">${savedName}</p>` : ''}
+      <p class="title-sub">a story of what-ifs</p>
       <blockquote class="title-epigraph">
-        "She had left her parents' home in a dream, and was now lying ill.
-        She did not know that she herself had gone away."
-        <cite>— Chen Xuanyou, <em>An Account of the Detached Soul</em> (c. 9th century)</cite>
+        "At this point, the “woman” in the boudoir heard what was
+going on and happily rose from her bed...Then she came
+out to meet Qianniang, whereupon the two fused together into a
+single body, as did the clothing they were wearing."
+        <cite>— Chen Xuanyou, <em>An Account of the Detached Soul</em> (c. 7-9th century)</cite>
       </blockquote>
       <button class="begin-btn" id="begin">begin</button>
       ${completed ? `<div style="margin-top:1.8em">
@@ -260,42 +421,68 @@ function renderTitle() {
     </div>
   `;
 
-  showScreen(html, (el) => {
-    el.querySelector('#begin').addEventListener('click', () => {
-      document.getElementById('worldline').style.opacity = '1';
-      transitionTo('n1');
+    showScreen(html, (el) => {
+        // Pre-load saved name into session state
+        if (savedName) state.playerName = savedName;
+
+        el.querySelector('#begin').addEventListener('click', () => {
+            document.getElementById('worldline').style.opacity = '1';
+            transitionTo('n1');
+        });
+        if (completed) {
+            el.querySelector('#openTree').addEventListener('click', () => renderTree('title'));
+        }
+        // Name on title is display only — changes happen via the card
     });
-    if (completed) {
-      el.querySelector('#openTree').addEventListener('click', () => renderTree('title'));
-    }
-  });
 }
 
 // ---- PROSE ----
 // Continue button is the only way forward — tap-anywhere removed.
 
 function renderProse(node) {
-  const paragraphs = node.text.map(p => `<p>${p}</p>`).join('');
-  const bleedHtml  = buildBleedHtml(node.bleeds);
-  const hasBleed   = node.bleeds && node.bleeds.length > 0;
+    const paragraphs = node.text.map(p => `<p>${p}</p>`).join('');
+    const bleedHtml = buildBleedHtml(node.bleeds);
+    const hasBleed = node.bleeds && node.bleeds.length > 0;
 
-  const html = `
-    <div class="text-wrap">
-      <div class="bleed-wrap">${bleedHtml}</div>
-      <div class="main-text">${paragraphs}</div>
-      <button class="continue-btn" id="continueBtn">continue →</button>
-      <p class="swipe-prompt">swipe up to continue</p>
+    const html = `
+    <div class="story-scroll-wrap">
+      <div class="story-fade-top"></div>
+      <div class="story-scroll" id="storyScroll">
+        <div class="story-inner">
+          <div class="text-wrap">
+            <div class="bleed-wrap">${bleedHtml}</div>
+            <div class="main-text">${paragraphs}</div>
+            <button class="continue-btn" id="continueBtn">continue →</button>
+            <p class="swipe-prompt">swipe up to continue</p>
+          </div>
+        </div>
+      </div>
+      <div class="story-fade-bottom"></div>
     </div>
   `;
 
-  showScreen(html, (el) => {
-    if (hasBleed) {
-      setupHoldMechanic(el.querySelector('.text-wrap'));
-    }
-    const advance = () => { if (!state.isHolding) transitionTo(node.next); };
-    el.querySelector('#continueBtn').addEventListener('click', advance);
-    setupSwipe(el, advance);
-  });
+    showScreen(html, (el) => {
+        const scroll = el.querySelector('#storyScroll');
+        if (hasBleed) {
+            setupHoldMechanic(el.querySelector('.text-wrap'));
+        }
+        const advance = () => { if (!state.isHolding) transitionTo(node.next); };
+        el.querySelector('#continueBtn').addEventListener('click', advance);
+        setupSwipe(el, advance);
+        applyScrollBehavior(scroll);
+    });
+}
+
+// ---- ROUTE (silent redirect based on fork2) ----
+// No screen rendered — immediately navigates based on player choice history.
+
+function renderRoute(node) {
+    const isOpen = state.fork2 === 'yes';
+    const dest = isOpen ? node.openNext : node.closedNext;
+    // renderRoute never calls showScreen so _transitioning is still true here.
+    // Reset the lock before navigating so the next transitionTo goes through.
+    _transitioning = false;
+    transitionTo(dest);
 }
 
 // ---- SPLIT INTERSTITIAL ----
@@ -304,173 +491,211 @@ function renderProse(node) {
 // at least once, ensuring they discover it before moving on.
 
 function renderSplit(node) {
-  const paragraphs = node.text.map(p => `<p>${p}</p>`).join("");
-  const b = node.bleed;
-  const ox = 2, oy = -1;
-  const bleedHtml = `<div class="bleed" style="top:${b.top};left:${b.left};transform:translate(${ox}px,${oy}px)">${b.text}</div>`;
+    const paragraphs = node.text.map(p => `<p>${p}</p>`).join("");
+    const b = node.bleed;
+    const ox = 2, oy = -1;
+    const bleedHtml = `<div class="bleed" style="top:${b.top};left:${b.left};transform:translate(${ox}px,${oy}px)">${b.text}</div>`;
 
-  const nextNode = state.fork1 === "seaside" ? node.seasideNext : node.cityNext;
+    const nextNode = state.fork1 === "seaside" ? node.seasideNext : node.cityNext;
 
-  const html = `
-    <div class="text-wrap">
-      <div class="bleed-wrap">${bleedHtml}</div>
-      <div class="main-text">${paragraphs}</div>
-      <p class="split-prompt">Press and hold to see through.</p>
-      <button class="continue-btn" id="continueBtn" style="opacity:0;pointer-events:none">continue &rarr;</button>
-      <p class="swipe-prompt" id="swipePrompt" style="opacity:0">swipe up to continue</p>
+    const html = `
+    <div class="story-scroll-wrap">
+      <div class="story-fade-top"></div>
+      <div class="story-scroll" id="storyScroll">
+        <div class="story-inner">
+          <div class="text-wrap">
+            <div class="bleed-wrap">${bleedHtml}</div>
+            <div class="main-text">${paragraphs}</div>
+            <p class="split-prompt">Press and hold to see through.</p>
+            <button class="continue-btn" id="continueBtn" style="opacity:0;pointer-events:none">continue &rarr;</button>
+            <p class="swipe-prompt" id="swipePrompt" style="opacity:0">swipe up to continue</p>
+          </div>
+        </div>
+      </div>
+      <div class="story-fade-bottom"></div>
     </div>
   `;
 
-  showScreen(html, (el) => {
-    const wrap       = el.querySelector(".text-wrap");
-    const btn        = el.querySelector("#continueBtn");
-    const swipeLabel = el.querySelector("#swipePrompt");
-    let hasHeld      = false;
+    showScreen(html, (el) => {
+        applyScrollBehavior(el.querySelector('#storyScroll'));
+        const wrap = el.querySelector(".text-wrap");
+        const btn = el.querySelector("#continueBtn");
+        const swipeLabel = el.querySelector("#swipePrompt");
+        let hasHeld = false;
 
-    const revealAdvance = () => {
-      if (!hasHeld) {
-        hasHeld = true;
-        // Desktop: show button
-        btn.style.transition = "opacity 600ms ease";
-        btn.style.opacity = "1";
-        btn.style.pointerEvents = "all";
-        // Mobile: show swipe prompt
-        if (swipeLabel) {
-          swipeLabel.style.transition = "opacity 600ms ease";
-          swipeLabel.style.opacity = "1";
-        }
-      }
-    };
+        const revealAdvance = () => {
+            if (!hasHeld) {
+                hasHeld = true;
+                // Desktop: show button
+                btn.style.transition = "opacity 600ms ease";
+                btn.style.opacity = "1";
+                btn.style.pointerEvents = "all";
+                // Mobile: show swipe prompt
+                if (swipeLabel) {
+                    swipeLabel.style.transition = "opacity 600ms ease";
+                    swipeLabel.style.opacity = "1";
+                }
+            }
+        };
 
-    setupHoldMechanic(wrap);
-    wrap.addEventListener("mouseup",  revealAdvance);
-    wrap.addEventListener("touchend", revealAdvance, { passive: true });
+        setupHoldMechanic(wrap);
+        wrap.addEventListener("mouseup", revealAdvance);
+        wrap.addEventListener("touchend", revealAdvance, { passive: true });
 
-    btn.addEventListener("click", () => {
-      if (!state.isHolding) transitionTo(nextNode);
+        btn.addEventListener("click", () => {
+            if (!state.isHolding) transitionTo(nextNode);
+        });
+        setupSwipe(el, () => {
+            if (hasHeld && !state.isHolding) transitionTo(nextNode);
+        });
     });
-    setupSwipe(el, () => {
-      if (hasHeld && !state.isHolding) transitionTo(nextNode);
-    });
-  });
 }
 
 // ---- PROSE VARIANT ----
 
 function renderProseVariant(node) {
-  const variant    = state.fork1 === 'seaside' ? 'seaside' : 'city';
-  const paragraphs = node.variants[variant].map(p => `<p>${p}</p>`).join('');
-  const bleedHtml  = buildBleedHtml(node.bleeds);
+    const variant = state.fork1 === 'seaside' ? 'seaside' : 'city';
+    const paragraphs = node.variants[variant].map(p => `<p>${p}</p>`).join('');
+    const bleedHtml = buildBleedHtml(node.bleeds);
 
-  const html = `
-    <div class="text-wrap">
-      <div class="bleed-wrap">${bleedHtml}</div>
-      <div class="main-text">${paragraphs}</div>
-      <button class="continue-btn" id="continueBtn">continue →</button>
-      <p class="swipe-prompt">swipe up to continue</p>
+    const html = `
+    <div class="story-scroll-wrap">
+      <div class="story-fade-top"></div>
+      <div class="story-scroll" id="storyScroll">
+        <div class="story-inner">
+          <div class="text-wrap">
+            <div class="bleed-wrap">${bleedHtml}</div>
+            <div class="main-text">${paragraphs}</div>
+            <button class="continue-btn" id="continueBtn">continue →</button>
+            <p class="swipe-prompt">swipe up to continue</p>
+          </div>
+        </div>
+      </div>
+      <div class="story-fade-bottom"></div>
     </div>
   `;
 
-  showScreen(html, (el) => {
-    setupHoldMechanic(el.querySelector('.text-wrap'));
-    const advance = () => { if (!state.isHolding) transitionTo(node.next); };
-    el.querySelector('#continueBtn').addEventListener('click', advance);
-    setupSwipe(el, advance);
-  });
+    showScreen(html, (el) => {
+        const scroll = el.querySelector('#storyScroll');
+        setupHoldMechanic(el.querySelector('.text-wrap'));
+        const advance = () => { if (!state.isHolding) transitionTo(node.next); };
+        el.querySelector('#continueBtn').addEventListener('click', advance);
+        setupSwipe(el, advance);
+        applyScrollBehavior(scroll);
+    });
 }
 
 // ---- FORK ----
 
 function renderFork(node, nodeId) {
-  const paragraphs  = node.text.map(p => `<p>${p}</p>`).join('');
-  const bleedHtml   = buildBleedHtml(node.bleeds);
-  const hasBleed    = node.bleeds && node.bleeds.length > 0;
+    const paragraphs = node.text.map(p => `<p>${p}</p>`).join('');
+    const bleedHtml = buildBleedHtml(node.bleeds);
+    const hasBleed = node.bleeds && node.bleeds.length > 0;
 
-  const choicesHtml = node.choices.map((c, i) =>
-    `<button class="choice" data-index="${i}">${c.label}</button>`
-  ).join('');
+    const choicesHtml = node.choices.map((c, i) =>
+        `<button class="choice" data-index="${i}">${c.label}</button>`
+    ).join('');
 
-  const html = `
-    <div class="text-wrap">
-      <div class="bleed-wrap">${bleedHtml}</div>
-      <div class="main-text">${paragraphs}</div>
-      <div class="choices">
-        <p class="choice-prompt">${node.prompt}</p>
-        ${choicesHtml}
+    const html = `
+    <div class="story-scroll-wrap">
+      <div class="story-fade-top"></div>
+      <div class="story-scroll" id="storyScroll">
+        <div class="story-inner">
+          <div class="text-wrap">
+            <div class="bleed-wrap">${bleedHtml}</div>
+            <div class="main-text">${paragraphs}</div>
+            <div class="choices">
+              <p class="choice-prompt">${node.prompt}</p>
+              ${choicesHtml}
+            </div>
+          </div>
+        </div>
       </div>
+      <div class="story-fade-bottom"></div>
     </div>
   `;
 
-  showScreen(html, (el) => {
-    if (hasBleed) {
-      setupHoldMechanic(el.querySelector('.text-wrap'));
-    }
-    el.querySelectorAll('.choice').forEach((btn, i) => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (state.isHolding) return;
-        const choice = node.choices[i];
-        updateWorldline(choice.worldlineSuffix);
-        recordChoice(nodeId, i);
-        transitionTo(choice.next);
-      });
+    showScreen(html, (el) => {
+        applyScrollBehavior(el.querySelector('#storyScroll'));
+        if (hasBleed) {
+            setupHoldMechanic(el.querySelector('.text-wrap'));
+        }
+        el.querySelectorAll('.choice').forEach((btn, i) => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (state.isHolding) return;
+                const choice = node.choices[i];
+                updateWorldline(choice.worldlineSuffix); // triggers flash
+                recordChoice(nodeId, i);
+                // Delay transition slightly so flash is visible before screen change
+                setTimeout(() => transitionTo(choice.next), 1300);
+            });
+        });
     });
-  });
 }
 
 // ---- SEAM ----
 
 function renderSeam(node) {
-  setWorldlineInfinity();
+    setWorldlineInfinity();
 
-  const paragraphs = node.text.map(p => `<p class="seam-text">${p}</p>`).join('');
+    const paragraphs = node.text.map(p => `<p class="seam-text">${p}</p>`).join('');
 
-  const html = `
-    <div class="text-wrap" style="text-align:center;max-width:460px">
-      ${paragraphs}
-      <button class="continue-btn" id="continueBtn" style="margin-top:2em">continue →</button>
-      <p class="swipe-prompt">swipe up to continue</p>
+    const html = `
+    <div class="story-scroll-wrap">
+      <div class="story-fade-top"></div>
+      <div class="story-scroll story-scroll--short" id="storyScroll">
+        <div class="story-inner" style="text-align:center">
+          <div class="text-wrap" style="max-width:460px">
+            ${paragraphs}
+            <button class="continue-btn" id="continueBtn" style="margin-top:2em">continue →</button>
+            <p class="swipe-prompt">swipe up to continue</p>
+          </div>
+        </div>
+      </div>
+      <div class="story-fade-bottom"></div>
     </div>
   `;
 
-  showScreen(html, (el) => {
-    setTimeout(restoreWorldline, 1200);
-    const advance = () => transitionTo(node.next);
-    el.querySelector('#continueBtn').addEventListener('click', advance);
-    setupSwipe(el, advance);
-  });
+    showScreen(html, (el) => {
+        setTimeout(restoreWorldline, 1200);
+        const advance = () => transitionTo(node.next);
+        el.querySelector('#continueBtn').addEventListener('click', advance);
+        setupSwipe(el, advance);
+    });
 }
 
 // ---- CARD ----
 
 function renderCard() {
-  saveCompleted(state.worldline);
+    saveCompleted(state.worldline);
 
-  const wlEl = document.getElementById('worldline');
-  wlEl.style.opacity = '0';
-  setTimeout(() => {
-    wlEl.textContent   = '∞';
-    wlEl.style.opacity = '0.3';
-  }, 800);
+    const wlEl = document.getElementById('worldline');
+    wlEl.style.opacity = '0';
+    setTimeout(() => {
+        wlEl.textContent = '∞';
+        wlEl.style.opacity = '0.3';
+    }, 800);
 
-  const ending = ENDINGS[state.worldline] || 'someone who made it here';
+    const ending = ENDINGS[state.worldline] || 'someone who made it here';
 
-  const prefix1   = state.fork1 === 'seaside' ? '1.1' : '1.2';
-  const prefix2   = state.fork1 === 'seaside'
-    ? (state.fork2 === 'yes' ? '1.1.1' : '1.1.2')
-    : (state.fork2 === 'yes' ? '1.2.1' : '1.2.2');
-  const pool      = [...(CARD_BLEEDS[prefix1] || []), ...(CARD_BLEEDS[prefix2] || [])];
-  const bleedLine = pool[Math.floor(Math.random() * pool.length)] || '';
+    const prefix1 = state.fork1 === 'seaside' ? '1.1' : '1.2';
+    const prefix2 = state.fork1 === 'seaside'
+        ? (state.fork2 === 'yes' ? '1.1.1' : '1.1.2')
+        : (state.fork2 === 'yes' ? '1.2.1' : '1.2.2');
+    const pool = [...(CARD_BLEEDS[prefix1] || []), ...(CARD_BLEEDS[prefix2] || [])];
+    const bleedLine = pool[Math.floor(Math.random() * pool.length)] || '';
 
-  const locationLabel = state.fork1 === 'seaside' ? 'The seaside' : 'The city';
-  const fork2Label    = state.fork2 === 'yes'
-    ? (state.fork1 === 'seaside' ? 'you told the truth' : 'you wrote back')
-    : (state.fork1 === 'seaside' ? 'you stayed silent'  : 'you folded it away');
-  const fork3Label    = state.fork3 === 'open'
-    ? 'you opened the door'
-    : 'you stood at the threshold';
+    const locationLabel = state.fork1 === 'seaside' ? 'The seaside' : 'The city';
+    const fork2Label = state.fork2 === 'yes'
+        ? (state.fork1 === 'seaside' ? 'you told the truth' : 'you wrote back')
+        : (state.fork1 === 'seaside' ? 'you stayed silent' : 'you folded it away');
+    const fork3Label = state.fork3 === 'open' ? 'you opened the door'
+        : state.fork3 === 'denied' ? 'it was just a dream'
+            : state.fork3 === 'deferred' ? 'not yet. but someday'
+                : 'you stood at the threshold';
 
-  const html = `
+    const html = `
     <div class="card-scroll">
       <div class="card-wrap">
         <p class="card-label">A record of one passage through</p>
@@ -501,38 +726,86 @@ function renderCard() {
 
         <div class="name-field-wrap">
           <label class="name-label" for="nameInput">What was this person's name?</label>
-          <input class="name-input" id="nameInput" type="text"
-            autocomplete="off" autocorrect="off" spellcheck="false" placeholder="—">
-          <button class="name-confirm" id="confirmName">confirm →</button>
+          <div class="name-row">
+            <input class="name-input" id="nameInput" type="text"
+              autocomplete="off" autocorrect="off" spellcheck="false" placeholder="—">
+            <button class="name-change-btn" id="nameChangeBtn" style="display:none">change</button>
+          </div>
+          <button class="name-confirm" id="confirmName" style="display:none">confirm →</button>
         </div>
       </div>
     </div>
   `;
 
-  showScreen(html, (el) => {
-    const input   = el.querySelector('#nameInput');
-    const confirm = el.querySelector('#confirmName');
-    const submit  = () => {
-      const name = input.value.trim();
-      if (!name) { input.focus(); return; }
-      state.playerName = name;
-      transitionTo('final');
-    };
-    confirm.addEventListener('click', submit);
-    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); });
-    setTimeout(() => input.focus(), 700);
-  });
+    showScreen(html, (el) => {
+        const input = el.querySelector('#nameInput');
+        const confirm = el.querySelector('#confirmName');
+        const changeHint = el.querySelector('#nameChangeHint');
+        const changeBtn = el.querySelector('#nameChangeBtn');
+        const savedName = getSavedName();
+
+        if (savedName) {
+            // Prefill — field locked, change button visible, no confirm yet
+            input.value = savedName;
+            input.readOnly = true;
+            state.playerName = savedName;
+            changeBtn.style.display = 'inline-block';
+
+            // change button opens overlay; overlay confirm unlocks field
+            changeBtn.addEventListener('click', () => {
+                showRenameOverlay(() => {
+                    // After confirming reset, unlock field for new name entry
+                    input.readOnly = false;
+                    input.value = '';
+                    input.placeholder = '—';
+                    changeBtn.style.display = 'none';
+                    confirm.style.display = 'block';
+                    confirm.textContent = 'confirm →';
+                    setTimeout(() => input.focus(), 100);
+
+                    const submit = () => {
+                        const name = input.value.trim();
+                        if (!name) { input.focus(); return; }
+                        state.playerName = name;
+                        saveName(name);
+                        transitionTo('final');
+                    };
+                    confirm.addEventListener('click', submit);
+                    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); });
+                });
+            });
+
+            // continue without changing
+            confirm.textContent = 'continue →';
+            confirm.style.display = 'block';
+            confirm.addEventListener('click', () => transitionTo('final'));
+
+        } else {
+            // First run — field open, confirm visible
+            confirm.style.display = 'block';
+            const submit = () => {
+                const name = input.value.trim();
+                if (!name) { input.focus(); return; }
+                state.playerName = name;
+                saveName(name);
+                transitionTo('final');
+            };
+            confirm.addEventListener('click', submit);
+            input.addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); });
+            setTimeout(() => input.focus(), 700);
+        }
+    });
 }
 
 // ---- FINAL ----
 
 function renderFinal() {
-  document.getElementById('worldline').style.opacity = '0';
-  const name      = state.playerName || 'you';
-  const completed = getCompleted();
-  const total     = Object.keys(ENDINGS).length;
+    document.getElementById('worldline').style.opacity = '0';
+    const name = state.playerName || 'you';
+    const completed = getCompleted();
+    const total = Object.keys(ENDINGS).length;
 
-  const html = `
+    const html = `
     <div class="final-wrap">
       <span class="final-infinity">∞</span>
       <h2 class="final-name">${name}.</h2>
@@ -555,10 +828,10 @@ function renderFinal() {
     </div>
   `;
 
-  showScreen(html, (el) => {
-    el.querySelector('#openTree').addEventListener('click', () => renderTree('final'));
-    el.querySelector('#restart').addEventListener('click', resetAndRestart);
-  });
+    showScreen(html, (el) => {
+        el.querySelector('#openTree').addEventListener('click', () => renderTree('final'));
+        el.querySelector('#restart').addEventListener('click', resetAndRestart);
+    });
 }
 
 // ============================================================
@@ -566,71 +839,71 @@ function renderFinal() {
 // ============================================================
 
 const TREE_NODES = [
-  { id: '1',       label: '1',       x: 0,    y: 0,   leaf: false },
-  { id: '1.1',     label: '1.1',     x: -160, y: 80,  leaf: false },
-  { id: '1.2',     label: '1.2',     x:  160, y: 80,  leaf: false },
-  { id: '1.1.1',   label: '1.1.1',   x: -240, y: 160, leaf: false },
-  { id: '1.1.2',   label: '1.1.2',   x: -80,  y: 160, leaf: false },
-  { id: '1.2.1',   label: '1.2.1',   x:  80,  y: 160, leaf: false },
-  { id: '1.2.2',   label: '1.2.2',   x:  240, y: 160, leaf: false },
-  { id: '1.1.1.1', x: -280, y: 250, leaf: true },
-  { id: '1.1.1.2', x: -200, y: 250, leaf: true },
-  { id: '1.1.2.1', x: -120, y: 250, leaf: true },
-  { id: '1.1.2.2', x: -40,  y: 250, leaf: true },
-  { id: '1.2.1.1', x:  40,  y: 250, leaf: true },
-  { id: '1.2.1.2', x:  120, y: 250, leaf: true },
-  { id: '1.2.2.1', x:  200, y: 250, leaf: true },
-  { id: '1.2.2.2', x:  280, y: 250, leaf: true },
+    { id: '1', label: '1', x: 0, y: 0, leaf: false },
+    { id: '1.1', label: '1.1', x: -160, y: 80, leaf: false },
+    { id: '1.2', label: '1.2', x: 160, y: 80, leaf: false },
+    { id: '1.1.1', label: '1.1.1', x: -240, y: 160, leaf: false },
+    { id: '1.1.2', label: '1.1.2', x: -80, y: 160, leaf: false },
+    { id: '1.2.1', label: '1.2.1', x: 80, y: 160, leaf: false },
+    { id: '1.2.2', label: '1.2.2', x: 240, y: 160, leaf: false },
+    { id: '1.1.1.1', x: -290, y: 250, leaf: true },
+    { id: '1.1.1.2', x: -210, y: 250, leaf: true },
+    { id: '1.1.2.1', x: -130, y: 250, leaf: true },
+    { id: '1.1.2.2', x: -50, y: 250, leaf: true },
+    { id: '1.2.1.1', x: 50, y: 250, leaf: true },
+    { id: '1.2.1.2', x: 130, y: 250, leaf: true },
+    { id: '1.2.2.1', x: 210, y: 250, leaf: true },
+    { id: '1.2.2.2', x: 290, y: 250, leaf: true },
 ];
 
 const TREE_EDGES = [
-  ['1',     '1.1'],     ['1',     '1.2'],
-  ['1.1',   '1.1.1'],  ['1.1',   '1.1.2'],
-  ['1.2',   '1.2.1'],  ['1.2',   '1.2.2'],
-  ['1.1.1', '1.1.1.1'],['1.1.1', '1.1.1.2'],
-  ['1.1.2', '1.1.2.1'],['1.1.2', '1.1.2.2'],
-  ['1.2.1', '1.2.1.1'],['1.2.1', '1.2.1.2'],
-  ['1.2.2', '1.2.2.1'],['1.2.2', '1.2.2.2'],
+    ['1', '1.1'], ['1', '1.2'],
+    ['1.1', '1.1.1'], ['1.1', '1.1.2'],
+    ['1.2', '1.2.1'], ['1.2', '1.2.2'],
+    ['1.1.1', '1.1.1.1'], ['1.1.1', '1.1.1.2'],
+    ['1.1.2', '1.1.2.1'], ['1.1.2', '1.1.2.2'],
+    ['1.2.1', '1.2.1.1'], ['1.2.1', '1.2.1.2'],
+    ['1.2.2', '1.2.2.1'], ['1.2.2', '1.2.2.2'],
 ];
 
 function renderTree(returnTo) {
-  const completed = getCompleted();
-  const W = 620, H = 320;
-  const cx = W / 2, cy = 30;
+    const completed = getCompleted();
+    const W = 620, H = 320;
+    const cx = W / 2, cy = 30;
 
-  function pos(n) { return { x: cx + n.x, y: cy + n.y }; }
+    function pos(n) { return { x: cx + n.x, y: cy + n.y }; }
 
-  const edgesSvg = TREE_EDGES.map(([aId, bId]) => {
-    const a = TREE_NODES.find(n => n.id === aId);
-    const b = TREE_NODES.find(n => n.id === bId);
-    const pa = pos(a), pb = pos(b);
-    const lit = completed.some(c => c === bId || c.startsWith(bId + '.') || bId.startsWith(c));
-    return `<line x1="${pa.x}" y1="${pa.y}" x2="${pb.x}" y2="${pb.y}"
+    const edgesSvg = TREE_EDGES.map(([aId, bId]) => {
+        const a = TREE_NODES.find(n => n.id === aId);
+        const b = TREE_NODES.find(n => n.id === bId);
+        const pa = pos(a), pb = pos(b);
+        const lit = completed.some(c => c === bId || c.startsWith(bId + '.') || bId.startsWith(c));
+        return `<line x1="${pa.x}" y1="${pa.y}" x2="${pb.x}" y2="${pb.y}"
       stroke="${lit ? 'var(--ghost)' : 'var(--faint)'}"
       stroke-width="${lit ? 1 : 0.5}"
       opacity="${lit ? 0.7 : 0.3}"/>`;
-  }).join('');
+    }).join('');
 
-  const nodesSvg = TREE_NODES.map(n => {
-    const p        = pos(n);
-    const done     = completed.includes(n.id);
-    const touched  = completed.some(c => c.startsWith(n.id) || n.id === '1');
-    const r        = n.leaf ? 6 : (n.id === '1' ? 9 : 7);
-    const fill     = done ? 'var(--ink)' : 'var(--paper)';
-    const stroke   = touched ? 'var(--ghost)' : 'var(--faint)';
-    const opacity  = touched ? 1 : 0.35;
+    const nodesSvg = TREE_NODES.map(n => {
+        const p = pos(n);
+        const done = completed.includes(n.id);
+        const touched = completed.some(c => c.startsWith(n.id) || n.id === '1');
+        const r = n.leaf ? 6 : (n.id === '1' ? 9 : 7);
+        const fill = done ? 'var(--ink)' : 'var(--paper)';
+        const stroke = touched ? 'var(--ghost)' : 'var(--faint)';
+        const opacity = touched ? 1 : 0.35;
 
-    const label    = !n.leaf ? `<text x="${p.x}" y="${p.y - r - 5}"
+        const label = !n.leaf ? `<text x="${p.x}" y="${p.y - r - 5}"
       text-anchor="middle" font-family="IBM Plex Mono,monospace"
       font-size="8" fill="${touched ? 'var(--ghost)' : 'var(--faint)'}"
       opacity="${opacity}">${n.label}</text>` : '';
 
-    const question = (n.leaf && !done)
-      ? `<text x="${p.x}" y="${p.y + 4}" text-anchor="middle"
+        const question = (n.leaf && !done)
+            ? `<text x="${p.x}" y="${p.y + 4}" text-anchor="middle"
            font-family="IBM Plex Mono,monospace" font-size="9"
            fill="var(--faint)">?</text>` : '';
 
-    return `<g class="tree-node${done && n.leaf ? ' tree-node--done' : ''}"
+        return `<g class="tree-node${done && n.leaf ? ' tree-node--done' : ''}"
       opacity="${opacity}"
       style="cursor:${done && n.leaf ? 'pointer' : 'default'}"
       ${n.leaf ? `data-ending="${n.id}"` : ''}>
@@ -638,9 +911,9 @@ function renderTree(returnTo) {
       <circle cx="${p.x}" cy="${p.y}" r="${r}" fill="${fill}" stroke="${stroke}" stroke-width="1"/>
       ${question}
     </g>`;
-  }).join('');
+    }).join('');
 
-  const html = `
+    const html = `
     <div class="tree-screen">
       <div class="tree-header">
         <span class="tree-title">world tree</span>
@@ -660,24 +933,24 @@ function renderTree(returnTo) {
     </div>
   `;
 
-  showScreen(html, (el) => {
-    const tooltip = el.querySelector('#treeTooltip');
+    showScreen(html, (el) => {
+        const tooltip = el.querySelector('#treeTooltip');
 
-    el.querySelectorAll('.tree-node--done').forEach(node => {
-      const id = node.dataset.ending;
-      if (!id) return;
-      const show = () => { tooltip.textContent = ENDINGS[id] || ''; tooltip.classList.add('visible'); };
-      const hide = () => tooltip.classList.remove('visible');
-      node.addEventListener('mouseenter', show);
-      node.addEventListener('mouseleave', hide);
-      node.addEventListener('click', () => tooltip.classList.contains('visible') ? hide() : show());
-    });
+        el.querySelectorAll('.tree-node--done').forEach(node => {
+            const id = node.dataset.ending;
+            if (!id) return;
+            const show = () => { tooltip.textContent = ENDINGS[id] || ''; tooltip.classList.add('visible'); };
+            const hide = () => tooltip.classList.remove('visible');
+            node.addEventListener('mouseenter', show);
+            node.addEventListener('mouseleave', hide);
+            node.addEventListener('click', () => tooltip.classList.contains('visible') ? hide() : show());
+        });
 
-    el.querySelector('#treeBack').addEventListener('click', () => {
-      if (returnTo === 'final') renderFinal();
-      else transitionTo('title');
+        el.querySelector('#treeBack').addEventListener('click', () => {
+            if (returnTo === 'final') renderFinal();
+            else transitionTo('title');
+        });
     });
-  });
 }
 
 // ============================================================
@@ -685,13 +958,54 @@ function renderTree(returnTo) {
 // ============================================================
 
 function recordChoice(nodeId, index) {
-  if (nodeId === 'n3') {
-    state.fork1 = index === 0 ? 'seaside' : 'city';
-  } else if (nodeId === 'n6a' || nodeId === 'n6b') {
-    state.fork2 = index === 0 ? 'yes' : 'no';
-  } else if (nodeId === 'n10') {
-    state.fork3 = index === 0 ? 'open' : 'closed';
-  }
+    if (nodeId === 'n3') {
+        state.fork1 = index === 0 ? 'seaside' : 'city';
+    } else if (nodeId === 'n6a' || nodeId === 'n6b') {
+        state.fork2 = index === 0 ? 'yes' : 'no';
+    } else if (nodeId === 'n10') {
+        state.fork3 = index === 0 ? 'open' : 'closed';
+    } else if (nodeId === 'n10_closed') {
+        state.fork3 = index === 0 ? 'denied' : 'deferred';
+    }
+}
+
+// ============================================================
+// RENAME OVERLAY
+// ============================================================
+
+function showRenameOverlay(onConfirm) {
+    // Remove any existing overlay
+    const existing = document.getElementById('renameOverlay');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'renameOverlay';
+    overlay.className = 'rename-overlay';
+    overlay.innerHTML = `
+    <div class="rename-box">
+      <p class="rename-warning">Changing your name will reset your worldlines.</p>
+      <p class="rename-warning-sub">All completed paths will be forgotten.</p>
+      <div class="rename-actions">
+        <button class="rename-confirm" id="renameConfirm">continue →</button>
+        <button class="rename-cancel"  id="renameCancel">cancel</button>
+      </div>
+    </div>
+  `;
+
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => overlay.classList.add('visible'));
+
+    const dismiss = (cb) => {
+        overlay.classList.remove('visible');
+        setTimeout(() => { overlay.remove(); if (cb) cb(); }, 300);
+    };
+
+    overlay.querySelector('#renameConfirm').addEventListener('click', () => {
+        clearAll();
+        dismiss(onConfirm);
+    });
+
+    overlay.querySelector('#renameCancel').addEventListener('click', () => dismiss());
 }
 
 // ============================================================
@@ -699,21 +1013,22 @@ function recordChoice(nodeId, index) {
 // ============================================================
 
 function resetAndRestart() {
-  state.worldline     = '1';
-  state.fork1         = null;
-  state.fork2         = null;
-  state.fork3         = null;
-  state.playerName    = '';
-  state.isHolding     = false;
-  state.holdHintShown = false;
+    _transitioning = false;
+    state.worldline = '1';
+    state.fork1 = null;
+    state.fork2 = null;
+    state.fork3 = null;
+    state.playerName = getSavedName(); // restore from storage if exists
+    state.isHolding = false;
+    state.holdHintShown = false;
 
-  const wl = document.getElementById('worldline');
-  wl.textContent   = '1';
-  wl.style.opacity = '0';
-  wl.style.color   = 'var(--worldline)';
+    const wl = document.getElementById('worldline');
+    wl.textContent = '1';
+    wl.style.opacity = '0';
+    wl.style.color = 'var(--worldline)';
 
-  document.getElementById('hold-hint').classList.remove('visible');
-  transitionTo('title');
+    document.getElementById('hold-hint').classList.remove('visible');
+    transitionTo('title');
 }
 
 // ============================================================

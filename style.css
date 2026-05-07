@@ -61,6 +61,50 @@ body::before {
 }
 
 /* ============================================================
+   WORLDLINE GHOSTS — appear during hold
+   ============================================================ */
+
+.worldline-ghost {
+  position: fixed;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 300;
+  letter-spacing: 0.05em;
+  color: var(--worldline);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 99;
+  transition: opacity 300ms ease;
+}
+
+/* ============================================================
+   WORLDLINE SPLIT FLASH
+   ============================================================ */
+
+#wl-flash {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--paper);
+  z-index: 200;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 300ms ease;
+}
+
+#wl-flash-number {
+  font-family: 'IM Fell English', serif;
+  font-style: italic;
+  font-size: clamp(48px, 14vw, 96px);
+  color: var(--ink);
+  letter-spacing: -0.02em;
+  transition: opacity 150ms ease;
+  text-align: center;
+}
+
+/* ============================================================
    HOLD HINT
    ============================================================ */
 
@@ -101,18 +145,84 @@ body::before {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 48px 32px;
+  padding: 0;
   opacity: 0;
   pointer-events: none;
   transition: opacity var(--transition), transform var(--transition);
+  overflow: hidden;
+  background: var(--paper);
+}
+
+/* Story screens use a scrollable inner wrapper with safe padding */
+.story-scroll {
+  width: 100%;
+  height: 100%;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  background: var(--paper);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* mask set dynamically by engine.js applyScrollBehavior */
+}
+
+/* When content fits without scrolling, center it vertically */
+.story-scroll--short {
+  justify-content: center;
+}
+
+/* Top and bottom fade overlays — positioned over the scroll container */
+.story-scroll-wrap {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.story-fade-top,
+.story-fade-bottom {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 320px;
+  pointer-events: none;
+  z-index: 10;
+  transition: opacity 400ms ease;
+}
+
+.story-fade-top {
+  top: 0;
+  background: linear-gradient(to bottom, var(--paper) 0px, var(--paper) 72px, transparent 320px);
+  opacity: 0;
+}
+
+.story-fade-bottom {
+  bottom: 0;
+  background: linear-gradient(to top, var(--paper) 0px, var(--paper) 72px, transparent 320px);
+  opacity: 1;
+}
+
+/* mask states handled via inline styles in engine.js */
+
+.story-inner {
+  max-width: 560px;
+  width: 100%;
+  padding: 72px 32px;
+  box-sizing: border-box;
 }
 
 .screen.active {
   opacity: 1;
   pointer-events: all;
+}
+
+/* Non-story screens (title, card, final, tree) center their content */
+.screen > :not(.story-scroll) {
+  margin: auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  max-height: 100%;
+  padding: 48px 32px;
+  box-sizing: border-box;
 }
 
 /* ============================================================
@@ -188,9 +298,9 @@ body::before {
 
 .choice-prompt {
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 11px;
+  font-size: 13px;
   color: var(--faint);
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   margin-bottom: 0.6em;
 }
 
@@ -279,28 +389,28 @@ body::before {
   font-style: italic;
   color: var(--ink);
   letter-spacing: -0.01em;
-  margin-bottom: 0.3em;
+  margin-bottom: 0.05em;
   text-align: center;
 }
 
 .title-sub {
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 300;
   color: var(--ghost);
-  letter-spacing: 0.15em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  margin-bottom: 3em;
+  margin-bottom: 1.8em;
   text-align: center;
 }
 
 .title-epigraph {
-  font-size: 14px;
+  font-size: 17px;
   font-style: italic;
   color: var(--ghost);
-  max-width: 380px;
-  margin: 0 auto 3em;
-  line-height: 1.8;
+  max-width: 420px;
+  margin: 0 auto 2em;
+  line-height: 1.75;
   border-left: 1px solid var(--faint);
   padding-left: 1.2em;
   text-align: left;
@@ -310,9 +420,9 @@ body::before {
   display: block;
   margin-top: 0.8em;
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 10px;
+  font-size: 13px;
   font-style: normal;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.05em;
   color: var(--faint);
 }
 
@@ -323,9 +433,9 @@ body::before {
   border: 1px solid var(--faint);
   padding: 12px 32px;
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 300;
-  letter-spacing: 0.15em;
+  letter-spacing: 0.12em;
   color: var(--ghost);
   cursor: pointer;
   transition: border-color 300ms ease, color 300ms ease;
@@ -536,6 +646,136 @@ body::before {
 .restart-btn:hover { color: var(--ghost); }
 
 /* ============================================================
+   TITLE NAME
+   ============================================================ */
+
+.title-name {
+  font-family: "IM Fell English", serif;
+  font-style: italic;
+  font-size: 22px;
+  color: var(--ghost);
+  margin-top: 0;
+  margin-bottom: 0.3em;
+  display: block;
+}
+
+/* ============================================================
+   NAME CHANGE HINT ON CARD
+   ============================================================ */
+
+.name-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.name-row .name-input {
+  flex: 1;
+}
+
+.name-change-btn {
+  background: none;
+  border: none;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  font-weight: 300;
+  letter-spacing: 0.1em;
+  color: var(--faint);
+  cursor: pointer;
+  padding: 0;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: color 300ms ease;
+}
+
+.name-change-btn:hover { color: var(--ghost); }
+
+/* ============================================================
+   RENAME OVERLAY
+   ============================================================ */
+
+.rename-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(244, 240, 232, 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 500;
+  opacity: 0;
+  transition: opacity 300ms ease;
+  padding: 32px;
+}
+
+.rename-overlay.visible { opacity: 1; }
+
+.rename-box {
+  max-width: 360px;
+  width: 100%;
+  text-align: center;
+  border: 1px solid var(--faint);
+  padding: 36px 32px;
+  background: var(--paper);
+}
+
+.rename-warning {
+  font-family: "IM Fell English", serif;
+  font-style: italic;
+  font-size: 17px;
+  color: var(--ink);
+  margin-bottom: 0.5em;
+  line-height: 1.6;
+}
+
+.rename-warning-sub {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  font-weight: 300;
+  color: var(--ghost);
+  letter-spacing: 0.06em;
+  margin-bottom: 2em;
+}
+
+.rename-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.rename-confirm {
+  background: none;
+  border: 1px solid var(--faint);
+  padding: 10px 28px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  font-weight: 300;
+  letter-spacing: 0.15em;
+  color: var(--ghost);
+  cursor: pointer;
+  transition: color 300ms ease, border-color 300ms ease;
+}
+
+.rename-confirm:hover {
+  color: var(--ink);
+  border-color: var(--ghost);
+}
+
+.rename-cancel {
+  background: none;
+  border: none;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  font-weight: 300;
+  letter-spacing: 0.1em;
+  color: var(--faint);
+  cursor: pointer;
+  transition: color 300ms ease;
+}
+
+.rename-cancel:hover { color: var(--ghost); }
+
+/* ============================================================
    TREE LINK & FINAL COUNT
    ============================================================ */
 
@@ -680,13 +920,24 @@ body::before {
    ============================================================ */
 
 @media (max-width: 480px) {
-  .screen       { padding: 72px 24px 40px; }
   body          { font-size: 17px; }
   .card-wrap    { padding: 24px 20px; }
   .text-wrap    { max-width: 100%; }
+  .story-inner  { padding: 72px 24px; }
 }
 
 @media (min-width: 768px) {
-  body   { font-size: 19px; }
-  .screen { padding: 64px 48px; }
+  body              { font-size: 21px; }
+  .story-inner      { padding: 88px 48px; }
+  .title-main       { font-size: clamp(42px, 6vw, 68px); }
+  .title-name       { font-size: 26px; }
+  .title-epigraph   { font-size: 16px; max-width: 440px; }
+  .main-text p      { font-size: 21px; }
+  .bleed            { font-size: 21px; }
+  .seam-text        { font-size: 19px; }
+  .card-ending-value{ font-size: 18px; }
+  .card-field-value { font-size: 18px; }
+  .final-body       { font-size: 18px; }
+  .final-thesis     { font-size: 13px; }
+  .choice           { font-size: 18px; }
 }
