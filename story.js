@@ -78,7 +78,7 @@ const STORY = {
     ],
     bleed: {
       text: "what if i went the other way?\nwould i be happier, then?\ni guess that's what she's wondering, now.",
-      top: '52%', left: '0%'
+      top: '45%', left: '0%'
     },
     seasideNext: 'n4a',
     cityNext: 'n4b'
@@ -93,15 +93,15 @@ const STORY = {
     type: 'prose',
     bleeds: [
       {
-        text: "it's quieter by the sea.\ni wonder if i would've liked that more.",
+        text: "it's quieter by the sea.\ni still remember thinking that.",
         top: '60%', left: '0%'
       }
     ],
     text: [
       "The seaside town receives you without ceremony.",
-      "You find the address from memory — a small house at the edge where the road ends and the grass takes over, and beyond the grass, the cliff, and beyond the cliff, the water. You cannot see the water yet but you can smell it. Salt and cold and something older than both.",
-      "The house has been empty for some time. You can tell by the quality of the silence — not quiet, exactly, but unoccupied. You set your suitcase down in the main room and stand there for a moment, listening to yourself breathe.",
-      "There is a window that faces the sea. You don't look through it yet."
+      "You located the address from memory: a small house where the road ends and the grass takes over. Beyond the grass, the cliff, and beyond the cliff, the water. You cannot see the water but you can smell it. Salt and cold and something ancient, old.",
+      "The house has been empty for some time. You can tell by the heaviness of its silence, like it's grown into the wood walls. You set your suitcase down in the first room you enter and stand there for a moment, listening to yourself breathe.",
+      "There is a window that faces the sea. You don't look through it."
     ],
     next: 'n5a'
   },
@@ -114,17 +114,17 @@ const STORY = {
         top: '28%', left: '2%'
       },
       {
-        text: "the stew. even that.\ni wonder if she notices how much she accepts.",
+        text: "i never liked fish stew.\nand yet I always accept, don't I?",
         top: '68%', left: '-1%'
       }
     ],
     text: [
-      "A neighbor comes by on the second day. She is older, practical, the kind of person who brings food as a form of conversation. She sets a covered dish on your table and looks around your kitchen as though assessing something.",
-      "\"You're the one who took the Maren place,\" she says. Not a question.",
-      "You say yes.",
-      "She looks at you for a moment — not unkindly, but with the particular attention of someone who is deciding how much to know about you. Then she nods, as though you've confirmed something she already suspected, and leaves.",
-      "You eat alone. The dish is a fish stew, simple and good. Outside, the sea is loud tonight. You had not noticed it being loud before.",
-      "There is something you did not say. You are not yet sure what it was."
+      "A neighbor comes by some days later. She is older, wiser, the kind of person who brings food as a form of conversation. She sets a covered dish on your table and looks around your kitchen as though assessing something.",
+      "\"You're the one who took Marin's place,\" she says. Not a question.",
+      "You say yes anyways.",
+      "She looks at you for a moment. Not unkindly, but with the attention of someone who is deciding how much they want to know about you. Then she nods, as though you've confirmed something she already suspected, and leaves.",
+      "You eat alone. The dish is a fish stew, simple and good. Outside, the sea is loud. You had not noticed how loud it was before.",
+      "There's something you should've said, but didn't. You are not yet sure what it was."
     ],
     next: 'n6a'
   },
@@ -133,26 +133,26 @@ const STORY = {
     type: 'fork',
     bleeds: [
       {
-        text: "she's deciding again.\nshe thinks it's about honesty. it's not.",
+        text: "she's thinking again.\nshe might think it's about honesty. it's not.",
         top: '18%', left: '1%'
       },
       {
-        text: "i told the truth once.\nit didn't make me more real. just more visible.",
+        text: "i told the truth before.\ndid it make a difference?",
         top: '65%', left: '-2%'
       }
     ],
     text: [
-      "The neighbor returns on the fourth day. This time she brings her grandson, a boy of about seven who immediately goes to look at your stuffed rabbit, sitting on the shelf where you placed it without thinking.",
+      "The neighbor returns some time later. This time she brings her grandson, a boy of about five who immediately goes to play with your stuffed rabbit, sitting on the shelf where you placed it without thinking.",
       "\"Yours?\" the neighbor asks, watching him.",
       "\"Yes,\" you say.",
-      "She accepts this. Then: \"Maren was a woman who kept to herself. People respected that. People will respect it in you too, if that's what you want.\"",
-      "An identity, ready-made, waiting to be worn. You could become the person who took the Maren place. It would be easy. It would be a kind of answer.",
+      "She nods. Then: \"Marin was a woman who kept to herself. People respected that. People will respect that from you too, if that's what you want.\"",
+      "You could become the person who took up Marin's place. It would be easy. It would be an answer to that question that you're asking.",
       "The boy sets the rabbit back carefully. He looks at you.",
-      "Your hands are very still at your sides."
+      "You don't remember asking any question, but you somehow know what she is talking about. Your hands are very still at your sides."
     ],
     prompt: "Do you tell her who you are?",
     choices: [
-      { label: "Yes — \"That's not quite right. Let me explain.\"",  next: 'n7a1', worldlineSuffix: '.1' },
+      { label: "Yes — \"That's not what I want.\"",  next: 'n7a1', worldlineSuffix: '.1' },
       { label: "No — you nod, and she takes it as agreement",        next: 'n7a2', worldlineSuffix: '.2' }
     ]
   },
@@ -162,24 +162,24 @@ const STORY = {
     type: 'prose',
     bleeds: [
       {
-        text: "she told them. i didn't think she would.",
+        text: "she told them. i didn't think she would, not this time.",
         top: '14%', left: '0%'
       },
       {
-        text: "what does it feel like, to be known\nin a place you just arrived?\ni genuinely don't remember.",
+        text: "what does it feel like, to be known?\ni don't remember.",
         top: '48%', left: '-1%'
       },
       {
-        text: "braver. or maybe just more tired of pretending.\ni can't decide which one i admire.",
+        text: "braver. or maybe just more tired of pretending.\ni can't decide which one is better.",
         top: '76%', left: '2%'
       }
     ],
     text: [
-      "You explain yourself simply. Not everything — just enough. Where you came from. Why you left. That you do not know how long you'll stay.",
-      "The neighbor listens with her hands folded. She does not look surprised. When you finish, she says: \"That's a longer road than the Maren place usually gets.\"",
-      "The boy has found a piece of string and is winding it around his fingers.",
-      "Something loosens in your chest. Small, but real.",
-      "You are still a stranger here. But you are a specific stranger now, not an empty one. There is a difference. You feel it in the way she looks at you — not as a shape to fill, but as a person to get used to.",
+      "You explain yourself simply. Not everything—just enough. Where you came from. Why you left. That you do not know how long you'll stay.",
+      "The neighbor listens with her hands folded. She does not look surprised, but she leans forward slightly, perhaps a bit intruiged. When you finish, she says: \"You're not like Marin at all.\"",
+      "The boy has found a piece of hair and is winding it around his fingers.",
+      "Something loosens in your chest.",
+      "You are still a stranger here. But you are a specific stranger now, not an blank one. You feel the difference in the way your neighbor looks at you: not as a shape to fill, but as a person to get used to.",
       "That night, you stand at the window that faces the sea. You look through it."
     ],
     next: 'n8a1'
@@ -204,12 +204,12 @@ const STORY = {
     ],
     text: [
       "You nod.",
-      "The neighbor seems satisfied. She tells you a few things about the town — the market on Thursdays, the path down to the beach that doesn't wash out in winter, the man two streets over who plays music too loudly on weekends but means no harm by it.",
+      "The neighbor seems satisfied. She tells you a few things about the town—the market on Thursdays, the path down to the beach that's still clear in winter, the man two streets over who plays music too loudly on weekends but means no harm by it.",
       "You listen. You say thank you. She leaves.",
       "The boy waves from the gate.",
-      "You stand in the kitchen for a long time after they're gone. The shape of yourself that you agreed to — the one who keeps to herself, who took the Maren place, who belongs here by default — settles over you like a coat that almost fits.",
-      "It is not uncomfortable. That is the unsettling part.",
-      "You do not look through the window that faces the sea."
+      "You stand in the kitchen for a long time after they're gone. The shape of you that you agreed to (the one who keeps to herself, who took Marin's place, who is here by default) settles over you like a thick smog",
+      "It is not uncomfortable. It is familiar.",
+      "That night, you still do not look through the window that faces the sea."
     ],
     next: 'n8a2'
   },
@@ -264,7 +264,7 @@ const STORY = {
     type: 'fork',
     bleeds: [
       {
-        text: "she's deciding again. she thinks it's about courage.\nit's about whether she believes she deserves to be found.",
+        text: "she's deciding again. she thinks it's about courage.\nit's not.",
         top: '20%', left: '0%'
       },
       {
@@ -295,7 +295,7 @@ const STORY = {
         top: '16%', left: '0%'
       },
       {
-        text: "the garden. she doesn't know yet that she's\nthe thing that grew despite neglect.",
+        text: "the garden. is that there, every time?",
         top: '50%', left: '-1%'
       },
       {
@@ -307,9 +307,9 @@ const STORY = {
       "You write: I remember you. I'm not sure what else to say. I think about dusk the same way.",
       "You address the envelope to a familiar name. You leave it with the woman at the front desk without explanation.",
       "Some days later, another letter comes.",
-      "This one is longer. It describes the garden in more detail: what was planted there, what grew anyway despite neglect, what refuses to come back no matter what. It asks you two questions, carefully, as though they cost something to write.",
+      "This one is longer. It describes the garden in more detail: what was planted there, what grew anyway despite neglect, what refuses to come back no matter what. It talks about other things too, that make your head swim and your heart pound in a way that is both thrilling and terrifying.",
       "You read it standing up. You sit down halfway through.",
-      "The room feels different after. Not larger, exactly. But less sealed."
+      "The room feels different after. Not larger, exactly. But less closed."
     ],
     next: 'n8b1'
   },
@@ -332,9 +332,9 @@ const STORY = {
       }
     ],
     text: [
-      "You fold the letter once, carefully, and place it inside the cover of a book you brought with you. You choose the book deliberately — one you have read many times, one you know you will not open again soon.",
+      "You fold the letter once, carefully, and place it inside the cover of a book you brought with you. You choose the book deliberately. It's one you have read many times, one you know you will not open again soon.",
       "The days that follow are ordinary. You learn the rhythms of the street below. You find a place that makes good coffee. You begin to know, by sound, which neighbor leaves earliest in the morning.",
-      "The letter is not forgotten. It is simply set aside, the way you set aside many things — with the private understanding that setting aside is not the same as deciding, and that some decisions make themselves in time.",
+      "The letter is not forgotten. It is simply set aside, the way you set aside many things, with the private understanding that setting aside is not the same as deciding, and that most decisions make themselves in time.",
       "At dusk, you find rooms difficult.",
       "You do not tell anyone."
     ],
@@ -351,7 +351,7 @@ const STORY = {
     type: 'prose',
     bleeds: [
       {
-        text: "she chose to be known. i wonder if it lightened her.\nor if it just made the weight more visible.",
+        text: "she chose to be known. i wonder if it helped her.\nit didn't help me.",
         top: '30%', left: '0%'
       },
       {
@@ -363,8 +363,8 @@ const STORY = {
       "The neighbor comes back a third time. This time without the boy, without food. She sits at your table and asks you a question you weren't expecting.",
       "She wants to know what you're looking for.",
       "You think about it honestly, which takes longer than it should. You tell her you aren't sure. That you thought leaving would make things clearer, but so far the clarity hasn't arrived.",
-      "She nods as though this is a reasonable answer. She tells you that Maren left for the same reason, forty years ago. That she came back. That she didn't regret either thing.",
-      "After she leaves, you stand at the window. The sea is doing what it always does. You feel, for the first time, like a specific person in a specific place — not just a shape the wind is moving."
+      "She nods as though this is a reasonable answer. You sit in silence for a while after that. It's comfortable.",
+      "After she leaves, you stand at the window. The sea is doing what it always does. You feel, for the first time, like a specific person in a specific place. Not just a breeze moving alongside the wind."
     ],
     next: 'seam'
   },
@@ -383,10 +383,10 @@ const STORY = {
       }
     ],
     text: [
-      "The weeks pass. You become, incrementally, the person who took the Maren place.",
+      "The weeks pass. You become the person who took Marin's place.",
       "The neighbor waves when she sees you at the market. The man two streets over nods. The boy, when he visits his grandmother, always checks that the rabbit is still on the shelf.",
-      "It is not a bad life. It fits in most of the ways that matter.",
-      "But sometimes, walking back from the cliff path in the evening, you catch yourself about to say something — and then don't. The unsaid thing has no specific shape. It is not a confession or a correction. It is simply the feeling that somewhere inside you, someone is still waiting to be introduced."
+      "It is not a bad life. It treats you well, in most of the ways that matter.",
+      "But sometimes, walking back from the cliff path in the evening, you feel an unsaid thing inside you. It has no specific shape. It is not a confession or a correction. It is simply the feeling that there has to be something—more."
     ],
     next: 'seam'
   },
@@ -400,15 +400,14 @@ const STORY = {
         top: '22%', left: '0%'
       },
       {
-        text: "she's learning to take up space in someone's thoughts.\nit's strange to watch. i forgot that was possible.",
+        text: "she's learning about the possibilities.",
         top: '60%', left: '-1%'
       }
     ],
     text: [
       "More letters come. You write back to all of them.",
-      "The correspondence has its own rhythm now — questions answered, questions asked, the slow accumulation of a person in words. You learn about the garden in winter, about the sound the house makes in the wind, about a childhood memory involving a red coat that makes you laugh out loud alone in your room.",
-      "You write that back too. That you laughed.",
-      "One evening you realize you've been in the city for months and this room, this chair, this particular quality of light in the late afternoon — it has become yours without your noticing. You didn't choose it exactly. You just kept returning to it.",
+      "The correspondence has its own rhythm now. Questions answered, questions asked, the slow accumulation of a connection in words. You learn about the garden in winter, about the sound a house makes by the shore, about a stuffed rabbit so similar to your own.",
+      "One evening you realize you've been in the city for months and this room, this chair, this particular quality of light in the late afternoon—it has all become yours without your noticing. You didn't choose it, exactly. You just kept returning to it.",
       "The latest letter is on the table. You haven't opened it yet. You find you are looking forward to it in a way that doesn't frighten you."
     ],
     next: 'seam'
@@ -435,8 +434,7 @@ const STORY = {
       "The book sits on the shelf. You do not open it.",
       "Life organizes itself around the not-opening. You find other things to read. You rearrange the shelf twice. Once, you pick the book up and hold it for a long moment, feeling the slight extra weight of the letter inside, and then put it back.",
       "You tell yourself you're not ready. This is probably true.",
-      "But some evenings, at dusk, you sit in the chair that belongs to no one and you think about the garden. About what grows despite neglect. About the particular kind of courage it takes to ask someone if they still think of you, and to mean it, and to send it anyway.",
-      "You don't know their name. You realize this only now. The letter had no signature, and you never looked for one."
+      "But some evenings, at dusk, you sit in the chair that belongs to no one and you think about the garden. About what grows despite neglect. About the particular kind of courage it takes to ask if someone still thinks of you, and to mean it, and to send it anyway.",
     ],
     next: 'seam'
   },
@@ -449,10 +447,10 @@ const STORY = {
   seam: {
     type: 'seam',
     text: [
-      "There is a moment — you have had it before, in other forms — where you become aware, briefly, of all the lives you are not living.",
-      "It arrives without warning. Usually in the evening. Usually when you are doing something ordinary — washing a dish, watching the street, lying still in a room that is becoming familiar.",
-      "The feeling is not grief, exactly. It is more like the awareness of a frequency you cannot quite tune to. Something adjacent. Something that knows your name and uses it differently.",
-      "You have made choices. The choices have made you. This is not a complaint — it is just the shape of things, the way a river is shaped by what it runs against.",
+      "There is a recurring moment (that you have had before, in other forms) where you become aware, briefly, of all the lives you are not living.",
+      "It arrives without warning. Usually in the evening. Usually when you are doing something ordinary, like—washing a dish, watching the street, lying still in a room that is silent and loud all at once.",
+      "The feeling is not grief, exactly. It is more like the awareness of a frequency you cannot quite tune to. Something adjacent. Something that wears your name but is not you.",
+      "You have made choices. Those choices have made you. This is just the make of things, like the way a river is shaped by what it runs against.",
       "You breathe.",
       "You continue."
     ],
@@ -482,10 +480,10 @@ const STORY = {
     ],
     text: [
       "Some weeks have passed.",
-      "You have settled into something — not happiness, not unhappiness, but a particular texture of days that you recognize as yours. You have a routine. You have a face you make at certain hours. You have begun to think of the future in small increments, which feels like progress.",
+      "You have settled into something. Not happiness, not unhappiness, but a particular pattern of days that you recognize as yours. You have a routine. You have a face you make at certain hours. You have begun to think of the future in smaller increments, which feels like progress.",
       "And yet.",
-      "At night, before sleep, there is a question you cannot stop asking. It does not have words exactly — it is more like a pressure, a directional thing, as though some part of you is always oriented toward somewhere else. Toward a version of this that went differently.",
-      "You wonder, not for the first time, if everyone feels this. If this is just the cost of having chosen at all."
+      "At night, before sleep, there is a question you cannot stop asking. It contains a pressure, a directional pull, as though some part of you is always oriented toward somewhere else. Toward a version of this that went differently.",
+      "You wonder, not for the first time, if everyone feels this. If this is just the cost of living, and choosing."
     ],
     next: 'n9'
   },
@@ -497,20 +495,20 @@ const STORY = {
       { text: "there she is.",                                                    top: '8%',  left: '0%' },
       { text: "she sees us. she doesn't know\nthat's what she's doing, but she does.", top: '32%', left: '-1%' },
       { text: "the window. always the window.\nwe all found a window.",            top: '58%', left: '1%' },
-      { text: "i looked like her once.\nor she looked like me.\ni can't remember which direction that goes.", top: '78%', left: '0%' }
+      { text: "i looked like her once.\nor she looked like me.\ni can't remember.", top: '78%', left: '0%' }
     ],
     variants: {
       seaside: [
         "You catch your reflection in the window that faces the sea.",
-        "You look like yourself. Of course you do. But there is a moment — just a moment — where the face looking back seems to belong to someone who made different choices, who arrived somewhere else, who is also, right now, looking into a reflection and thinking something similar.",
+        "You look like yourself. Of course you do. But there is a moment where the face looking back seems to belong to someone who made different choices, who arrived somewhere else, who is also, right now, looking into a reflection over a busy street and thinking something similar.",
         "The moment passes.",
         "The sea is loud tonight."
       ],
       city: [
-        "You catch your reflection in the dark window above the street.",
-        "You look like yourself. Of course you do. But there is a moment — just a moment — where the face looking back seems to belong to someone standing at a cliff's edge, looking out at water, also catching her reflection in something, also thinking something similar.",
+        "You catch your reflection in the window above the street.",
+        "You look like yourself. Of course you do. But there is a moment  where the face looking back seems to belong to someone standing at a cliff's edge, looking out at water, also catching her reflection in something, also thinking something similar.",
         "The moment passes.",
-        "Below, the street continues its small negotiations."
+        "Below, the street quiets down."
       ]
     },
     next: 'n10_route'
@@ -535,11 +533,11 @@ const STORY = {
     ],
     text: [
       "You dream of a door.",
-      "It is not a remarkable door — wooden, ordinary, slightly swollen in its frame the way doors get in damp weather. You have seen this door before. You cannot remember where.",
-      "In the dream, you stand in front of it for a long time. You are aware, in the way of dreams, that on the other side is something you left behind. Not an object. Not a person exactly. Something closer to a version — of yourself, of a moment, of a road not taken.",
+      "It is not a remarkable door. Wooden, ordinary, slightly swollen in its frame the way doors get in damp weather. You have seen this door before. You cannot remember where.",
+      "In the dream, you stand in front of it for a long time. You are aware, in the way one is aware in dreams, that on the other side is something you left behind. Not an object. Not a person. Something closer to another version of yourself, of a road not taken.",
       "The dream does not tell you what to do.",
       "You wake up. The door is not there.",
-      "But the feeling remains — the sense of standing just before something, hand not yet raised to knock."
+      "But the feeling remains. The sense of standing before something, hand not yet raised to knock."
     ],
     prompt: "There is a door. You have been here before.",
     choices: [
@@ -562,8 +560,8 @@ const STORY = {
     ],
     text: [
       "You dream of a door.",
-      "It is not a remarkable door — wooden, ordinary, slightly swollen in its frame the way doors get in damp weather. You have seen this door before. You cannot remember where.",
-      "In the dream, you stand in front of it for a long time. You are aware, in the way of dreams, that on the other side is something you left behind. Not an object. Not a person exactly. Something closer to a version — of yourself, of a moment, of what might have been said.",
+      "It is not a remarkable door. Wooden, ordinary, slightly swollen in its frame the way doors get in damp weather. You have seen this door before. You cannot remember where.",
+      "In the dream, you stand in front of it for a long time. You are aware, in the way one is aware in dreams, that on the other side is something you left behind. Not an object. Not a person. Something closer to another version of yourself, of a road not taken.",
       "Your hand rises toward the handle.",
       "And then doesn't.",
       "You wake up. The door is not there.",
@@ -592,11 +590,11 @@ const STORY = {
 
 const ENDINGS = {
   // Seaside + truth
-  '1.1.1.1': 'someone who told the truth when it cost something, and then opened the door anyway',
-  '1.1.1.2': 'someone who told the truth and then stood very still at the threshold',
+  '1.1.1.1': 'someone who told the truth, and then opened the door',
+  '1.1.1.2': 'someone who told the truth but then stood very still at the threshold',
   // Seaside + silence
   '1.1.2.1': 'someone who wore a borrowed shape and decided the door was only a dream',
-  '1.1.2.2': 'someone who wore a borrowed shape and kept the door in her pocket, for later',
+  '1.1.2.2': 'someone who wore a borrowed shape and stored the door in her mind, for later',
   // City + wrote back
   '1.2.1.1': 'someone who let herself be found, and then opened every door she came to',
   '1.2.1.2': 'someone who reached out once, and then stood at the door, and decided that was enough for now',

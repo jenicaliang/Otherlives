@@ -163,7 +163,11 @@ body::before {
   flex-direction: column;
   align-items: center;
   /* mask set dynamically by engine.js applyScrollBehavior */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
+
+.story-scroll::-webkit-scrollbar { display: none; }
 
 /* When content fits without scrolling, center it vertically */
 .story-scroll--short {
@@ -294,6 +298,7 @@ body::before {
   display: flex;
   flex-direction: column;
   gap: 0;
+  margin-bottom: 0.5em;
 }
 
 .choice-prompt {
@@ -305,10 +310,11 @@ body::before {
 }
 
 .choice {
+  display: block;
+  width: 100%;
   background: none;
-  border: none;
-  border-top: 1px solid var(--faint);
-  padding: 16px 0;
+  border: 1px solid var(--faint);
+  padding: 14px 20px;
   text-align: left;
   font-family: 'IM Fell English', serif;
   font-size: 18px;
@@ -317,7 +323,7 @@ body::before {
   cursor: pointer;
   transition: color 300ms ease, border-color 300ms ease;
   -webkit-tap-highlight-color: transparent;
-  width: 100%;
+  margin-bottom: 10px;
 }
 
 .choice::before {
@@ -330,6 +336,10 @@ body::before {
 .choice:active {
   color: var(--ink);
   border-color: var(--ghost);
+}
+
+.choice:last-child {
+  margin-bottom: 0;
 }
 
 /* ============================================================
@@ -360,24 +370,8 @@ body::before {
   border-color: var(--ghost);
 }
 
-/* SWIPE PROMPT — mobile only, hidden on desktop */
-.swipe-prompt {
-  display: none;
-  margin: 2.5em auto 0;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 11px;
-  font-weight: 300;
-  color: var(--faint);
-  letter-spacing: 0.1em;
-  text-align: center;
-  user-select: none;
-  pointer-events: none;
-}
-
-@media (max-width: 480px) {
-  .continue-btn  { display: none; }
-  .swipe-prompt  { display: block; }
-}
+/* Swipe prompt removed — continue button used on all devices */
+.swipe-prompt { display: none; }
 
 /* ============================================================
    TITLE SCREEN
@@ -469,7 +463,11 @@ body::before {
   max-height: 100vh;
   padding: 32px 8px 48px;
   -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
+
+.card-scroll::-webkit-scrollbar { display: none; }
 
 .card-wrap {
   border: 1px solid var(--faint);
