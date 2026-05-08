@@ -389,11 +389,6 @@ function renderTitle() {
       <h1 class="title-main">Otherlives</h1>
       ${savedName ? `<p class="title-name" id="titleName">${savedName}</p>` : ''}
       <p class="title-sub">a story of what-ifs</p>
-      <blockquote class="title-epigraph">
-        "She had left her parents' home in a dream, and was now lying ill.
-        She did not know that she herself had gone away."
-        <cite>— Chen Xuanyou, <em>An Account of the Detached Soul</em> (c. 9th century)</cite>
-      </blockquote>
       <button class="begin-btn" id="begin">begin</button>
       ${completed ? `<div style="margin-top:1.8em">
         <button class="tree-link" id="openTree">view world tree →</button>
